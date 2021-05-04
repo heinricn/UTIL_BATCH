@@ -26,8 +26,8 @@ historyfile=hist.$( date "+%Y-%m-%d_%H-%M-%S" ).log
 batch="${USER}_Job.txt"
 
 ##Input run numbers##                                                                                                                                                                                             
-inputFile="/group/c-kaonlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/InputRunLists/Carbon_ALL" 
-#inputFile="/group/c-kaonlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/InputRunLists/TestRun5158"
+#inputFile="/group/c-kaonlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/InputRunLists/Carbon_ALL" 
+inputFile="/group/c-kaonlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/InputRunLists/TestRun7872"
 
 ## Tape stub                                                                                                                                                                                                      
 MSSstub='/mss/hallc/spring17/raw/coin_all_%05d.dat'
@@ -60,7 +60,7 @@ while true; do
 		#echo "TRACK: debug" >> ${batch}
                 echo "JOBNAME: KaonLT_HodoCalib_${SPEC}_${runNum}" >> ${batch}
 		echo "DISK_SPACE: 20 GB" >>${batch}                                                                                                                                                             
-                echo "MEMORY: 2500 MB" >> ${batch}
+                echo "MEMORY: 3500 MB" >> ${batch}
                 #echo "OS: centos7" >> ${batch}
                 echo "CPU: 1" >> ${batch} ### hcana single core, setting CPU higher will lower priority!                                                                                                          
 		echo "INPUT_FILES: ${tape_file}" >> ${batch}

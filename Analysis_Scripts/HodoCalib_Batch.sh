@@ -94,6 +94,7 @@ fi
 
 cd "$REPLAYPATH/CALIBRATION/"$spec"_hodo_calib/"
 root -l -q -b "$REPLAYPATH/CALIBRATION/"$spec"_hodo_calib/timeWalkHistos.C(\"$ROOTFILE\", $RUNNUMBER, \"coin\")"
+sleep 5
 root -l -q -b "$REPLAYPATH/CALIBRATION/"$spec"_hodo_calib/timeWalkCalib.C($RUNNUMBER)"
 
 # After executing first two root scripts, should have a new .param file so long as scripts ran ok, IF NOT THEN EXIT
