@@ -34,19 +34,19 @@ fi
      
 # Set path depending upon hostname. Change or add more as needed  
 if [[ "${HOSTNAME}" = *"farm"* ]]; then  
-    REPLAYPATH="/group/c-pionlt/USERS/${USER}/hallc_replay_lt"
+    REPLAYPATH="/group/c-kaonlt/USERS/${USER}/hallc_replay_lt"
     if [[ "${HOSTNAME}" != *"ifarm"* ]]; then
 	source /site/12gev_phys/softenv.sh 2.3
     fi
-    cd "/group/c-pionlt/hcana/"
-    source "/group/c-pionlt/hcana/setup.sh"
+    cd "/group/c-kaonlt/hcana/"
+    source "/group/c-kaonlt/hcana/setup.sh"
     cd "$REPLAYPATH"
     source "$REPLAYPATH/setup.sh"
 elif [[ "${HOSTNAME}" = *"qcd"* ]]; then
-    REPLAYPATH="/group/c-pionlt/USERS/${USER}/hallc_replay_lt"
+    REPLAYPATH="/group/c-kaonlt/USERS/${USER}/hallc_replay_lt"
     source /site/12gev_phys/softenv.sh 2.3
-    cd "/group/c-pionlt/hcana/"
-    source "/group/c-pionlt/hcana/setup.sh" 
+    cd "/group/c-kaonlt/hcana/"
+    source "/group/c-kaonlt/hcana/setup.sh" 
     cd "$REPLAYPATH"
     source "$REPLAYPATH/setup.sh" 
 elif [[ "${HOSTNAME}" = *"cdaq"* ]]; then
@@ -94,10 +94,8 @@ fi
 
 cd "$REPLAYPATH/CALIBRATION/"$spec"_hodo_calib/"
 root -l -q -b "$REPLAYPATH/CALIBRATION/"$spec"_hodo_calib/timeWalkHistos.C(\"$ROOTFILE\", $RUNNUMBER, \"coin\")"
-sleep 10
-
+sleep 5
 root -l -q -b "$REPLAYPATH/CALIBRATION/"$spec"_hodo_calib/timeWalkCalib.C($RUNNUMBER)"
-sleep 10
 
 # After executing first two root scripts, should have a new .param file so long as scripts ran ok, IF NOT THEN EXIT
 if [ ! -f "$REPLAYPATH/PARAM/"$OPT"/HODO/"$specL"hodo_TWcalib_$RUNNUMBER.param" ]; then
@@ -105,61 +103,78 @@ if [ ! -f "$REPLAYPATH/PARAM/"$OPT"/HODO/"$specL"hodo_TWcalib_$RUNNUMBER.param" 
     exit 2
 fi
 
-### Now we set up the second replay by making some .database and .param files for them
-cd "$REPLAYPATH/DBASE/COIN"
-if [ "$RUNNUMBER" -le "5334" ]; then
-    # Copy our normal ones
-    cp "$REPLAYPATH/DBASE/COIN/standard_Offline.database" "$REPLAYPATH/DBASE/COIN/"$OPT"_HodoCalib/standard_$RUNNUMBER.database"
-    cp "$REPLAYPATH/DBASE/COIN/OfflineAutumn18.param" "$REPLAYPATH/DBASE/COIN/"$OPT"_HodoCalib/general_$RUNNUMBER.param"
-    # Use sed to replace the strings, 3 means line 3, note for sed to work with a variable we need to use "", \ is an ignore character which we need to get the \ in their syntax "Line# s/TEXT TO REPLACE/REPLACEMENT/" FILE
-    sed -i "s/OfflineAutumn18.param/"$OPT"_HodoCalib\/general_$RUNNUMBER.param/" $REPLAYPATH"/DBASE/COIN/"$OPT"_HodoCalib/standard_$RUNNUMBER.database"
-    if [[ $OPT == "HMS" ]]; then
-	sed -i "s/hhodo_TWcalib_Autumn18.param/hhodo_TWcalib_$RUNNUMBER.param/" $REPLAYPATH/DBASE/COIN/HMS_HodoCalib/general_$RUNNUMBER.param 
-    elif [[ $OPT == "SHMS" ]]; then
-	sed -i "s/phodo_TWcalib_Autumn18.param/phodo_TWcalib_$RUNNUMBER.param/" $REPLAYPATH/DBASE/COIN/SHMS_HodoCalib/general_$RUNNUMBER.param
+# Need to find the DBASE file used in the previous replay, do this from the replay script used
+REPLAYSCRIPT1="${REPLAYPATH}/SCRIPTS/COIN/CALIBRATION/"$OPT"Hodo_Calib_Coin_Pt1.C"
+while IFS='' read -r line || [[ -n "$line" ]]; do
+    if [[ $line =~ "//" ]]; then continue;
+    elif [[ $line =~ "gHcParms->AddString(\"g_ctp_database_filename\"," ]]; then
+	tmpstring=$(echo $line| cut -d "," -f2) # This is the path to the DBase file but with some junk in the string
+	tmpstring2=$(echo $tmpstring | sed 's/[");]//g') # Sed command to strip junk (", ) or ; ) from the string
+	BASE_DBASEFILE="${REPLAYPATH}/${tmpstring2}"
     fi
+done < "$REPLAYSCRIPT1" 
+
+# Need to find the param file used in the previous replay, do this from provided runnumber and the database file
+# This could probably be simplified slightly, but basically it finds the right "block" and sets a flag to pick up the NEXT param file listed
+TestingVar=$((0))
+while IFS='' read -r line || [[ -n "$line" ]]; do
+    # If the line in the file is blank, contains a hash or has g_ctp in it, skip it, only leaves the lines which contain the run numbe ranges
+    if [ -z "$line" ] ; then continue;
+    elif [[ $line =~ "#" ]]; then continue;
+    elif [[ $line =~ "g_ctp_kin" ]]; then continue;
+    elif [[ $line != *"g_ctp_par"* ]]; then #If line is NOT the one specifying the param file, then get the run numbers
+	# Starting run number is just the field before the - delimiter (f1), ending run number is the one after (f2)
+	# -d specifies the delimiter which is the term in speech marks
+	RunStart=$(echo $line| cut -d "-" -f1)
+	RunEnd=$(echo $line| cut -d "-" -f2)
+	if [ "$RUNNUMBER" -ge "$RunStart" -a "$RUNNUMBER" -le "$RunEnd" ]; then
+	    TestingVar=$((1)) # If run number in range, set testing var to 1
+	else TestingVar=$((0)) # If not in range, set var to 0
+	fi
+    elif [[ $line =~ "g_ctp_par" ]]; then
+	if [ $TestingVar == 1 ]; then
+	    tmpstring3=$(echo $line| cut -d "=" -f2) # tmpstrings could almost certainly be combined into one expr
+	    BASE_PARAMFILE=$(echo $tmpstring3 | sed 's/["]//g')
+	    BASE_PARAMFILE_PATH="${REPLAYPATH}/${BASE_PARAMFILE}"
+	else continue
+	fi
+    fi
+done < "$BASE_DBASEFILE"
+
+# Now have base DBASE and PARAM files, copy these to a new directory and edit them with newly generated param files
+# Check files exist first, if they do, copy them and proceed
+if [[ ! -f "$BASE_DBASEFILE" || ! -f "$BASE_PARAMFILE_PATH" ]]; then
+    echo "Base DBASE or param file not found, check -"
+    echo "$BASE_DBASEFILE"
+    echo "and"
+    echo "$BASE_PARAMFILE_PATH"
+    echo "exist. Modify script accordingly."
+    exit 3
 fi
 
-if [ "$RUNNUMBER" -ge "5335" -a "$RUNNUMBER" -le "7045" ]; then
-    cp "$REPLAYPATH/DBASE/COIN/standard_Offline.database" "$REPLAYPATH/DBASE/COIN/"$OPT"_HodoCalib/standard_$RUNNUMBER.database"
-    cp "$REPLAYPATH/DBASE/COIN/OfflineWinter18.param" "$REPLAYPATH/DBASE/COIN/"$OPT"_HodoCalib/general_$RUNNUMBER.param"
-    sed -i "s/OfflineWinter18.param/"$OPT"_HodoCalib\/general_$RUNNUMBER.param/" $REPLAYPATH"/DBASE/COIN/"$OPT"_HodoCalib/standard_$RUNNUMBER.database"
-    if [[ $OPT == "HMS" ]]; then
-	sed -i "s/hhodo_TWcalib_Winter18.param/hhodo_TWcalib_$RUNNUMBER.param/" $REPLAYPATH/DBASE/COIN/HMS_HodoCalib/general_$RUNNUMBER.param 
-    elif [[ $OPT == "SHMS" ]]; then
-	sed -i "s/phodo_TWcalib_Winter18.param/phodo_TWcalib_$RUNNUMBER.param/" $REPLAYPATH/DBASE/COIN/SHMS_HodoCalib/general_$RUNNUMBER.param
-    fi
-fi
+echo "Copying $BASE_DBASEFILE and $BASE_PARAMFILE_PATH to ${OPT}_HodoCalib"
+cp "$BASE_DBASEFILE" "${REPLAYPATH}/DBASE/COIN/${OPT}_HodoCalib/standard_${RUNNUMBER}.database"
+cp "$BASE_PARAMFILE_PATH" "${REPLAYPATH}/DBASE/COIN/${OPT}_HodoCalib/general_${RUNNUMBER}.param"
 
-if [ "$RUNNUMBER" -ge "7046" -a "$RUNNUMBER" -le "8375" ]; then
-    cp "$REPLAYPATH/DBASE/COIN/standard_Offline.database" "$REPLAYPATH/DBASE/COIN/"$OPT"_HodoCalib/standard_$RUNNUMBER.database"
-    cp "$REPLAYPATH/DBASE/COIN/OfflineSpring19.param" "$REPLAYPATH/DBASE/COIN/"$OPT"_HodoCalib/general_$RUNNUMBER.param"
-    sed -i "s/OfflineSpring19.param/"$OPT"_HodoCalib\/general_$RUNNUMBER.param/" $REPLAYPATH"/DBASE/COIN/"$OPT"_HodoCalib/standard_$RUNNUMBER.database"
-    if [[ $OPT == "HMS" ]]; then
-	sed -i "s/hhodo_TWcalib_Spring19.param/hhodo_TWcalib_$RUNNUMBER.param/" $REPLAYPATH/DBASE/COIN/HMS_HodoCalib/general_$RUNNUMBER.param 
-    elif [[ $OPT == "SHMS" ]]; then
-	sed -i "s/phodo_TWcalib_Spring19.param/phodo_TWcalib_$RUNNUMBER.param/" $REPLAYPATH/DBASE/COIN/SHMS_HodoCalib/general_$RUNNUMBER.param
-    fi
-fi
+# Switch out the param file called in the dbase file
+# Sed command looks a bit different, need to use different quote/delimiters as variable uses / and so on
+sed -i 's|'"$BASE_PARAMFILE"'|'"DBASE/COIN/${OPT}_HodoCalib/general_$RUNNUMBER.param"'|' "${REPLAYPATH}/DBASE/COIN/${OPT}_HodoCalib/standard_${RUNNUMBER}.database"
 
-if [ "$RUNNUMBER" -ge "8376" ]; then
-    cp "$REPLAYPATH/DBASE/COIN/standard_Offline.database" "$REPLAYPATH/DBASE/COIN/"$OPT"_HodoCalib/standard_$RUNNUMBER.database"
-    cp "$REPLAYPATH/DBASE/COIN/OfflineSummer19.param" "$REPLAYPATH/DBASE/COIN/"$OPT"_HodoCalib/general_$RUNNUMBER.param"
-    sed -i "s/OfflineSummer19.param/"$OPT"_HodoCalib\/general_$RUNNUMBER.param/" $REPLAYPATH"/DBASE/COIN/"$OPT"_HodoCalib/standard_$RUNNUMBER.database"
-    if [[ $OPT == "HMS" ]]; then
-	sed -i "s/hhodo_TWcalib_Spring19.param/hhodo_TWcalib_$RUNNUMBER.param/" $REPLAYPATH/DBASE/COIN/HMS_HodoCalib/general_$RUNNUMBER.param 
-    elif [[ $OPT == "SHMS" ]]; then
-	sed -i "s/phodo_TWcalib_Spring19.param/phodo_TWcalib_$RUNNUMBER.param/" $REPLAYPATH/DBASE/COIN/SHMS_HodoCalib/general_$RUNNUMBER.param
-    fi
+# Depending upon spectrometer, switch out the relevant files in the param file
+if [[ $OPT == "HMS" ]]; then
+    sed -i "s/hhodo_TWcalib.*/hhodo_TWcalib_${RUNNUMBER}.param\"/" "${REPLAYPATH}/DBASE/COIN/${OPT}_HodoCalib/general_${RUNNUMBER}.param"
+elif [[ $OPT == "SHMS" ]]; then
+    sed -i "s/phodo_TWcalib.*/phodo_TWcalib_${RUNNUMBER}.param\"/" "${REPLAYPATH}/DBASE/COIN/${OPT}_HodoCalib/general_${RUNNUMBER}.param"
 fi
 
 # Back to the main directory
 cd "$REPLAYPATH"                                
 # Off we go again replaying
 eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/"$OPT"/PRODUCTION/"$OPT"Hodo_Calib_Coin_Pt2.C($RUNNUMBER,$MAXEVENTS)\""
+
 # Clean up the directories of our generated files
-mv "$REPLAYPATH/PARAM/"$OPT"/HODO/"$specL"hodo_TWcalib_$RUNNUMBER.param" "$REPLAYPATH/PARAM/"$OPT"/HODO/Calibration/"$specL"hodo_TWcalib_$RUNNUMBER.param"
 mv "$REPLAYPATH/CALIBRATION/"$spec"_hodo_calib/timeWalkHistos_"$RUNNUMBER".root" "$REPLAYPATH/CALIBRATION/"$spec"_hodo_calib/Calibration_Plots/timeWalkHistos_"$RUNNUMBER".root"
+mv "$REPLAYPATH/CALIBRATION/"$spec"_hodo_calib/timeWalkCalib_"$RUNNUMBER".root" "$REPLAYPATH/CALIBRATION/"$spec"_hodo_calib/Calibration_Plots/timeWalkCalib_"$RUNNUMBER".root"
 
 cd "$REPLAYPATH/CALIBRATION/"$spec"_hodo_calib/"
 # Define the path to the second replay root file
@@ -172,7 +187,7 @@ if [ ! -f "$REPLAYPATH/PARAM/"$OPT"/HODO/"$specL"hodo_Vpcalib_$RUNNUMBER.param" 
     exit 2
 fi
 
-mv "$REPLAYPATH/PARAM/"$OPT"/HODO/"$specL"hodo_Vpcalib_$RUNNUMBER.param" "$REPLAYPATH/PARAM/"$OPT"/HODO/Calibration/"$specL"hodo_Vpcalib_$RUNNUMBER.param"
+
 
 # Check our new file exists, if not exit, if yes, move it
 if [ ! -f "$REPLAYPATH/CALIBRATION/"$spec"_hodo_calib/HodoCalibPlots_$RUNNUMBER.root" ]; then
@@ -184,37 +199,17 @@ mv "$REPLAYPATH/CALIBRATION/"$spec"_hodo_calib/HodoCalibPlots_$RUNNUMBER.root" "
 
 ### Now we set up the third replay by editing our general.param file
 cd "$REPLAYPATH/DBASE/COIN"
-
+# Depending upon spectrometer, switch out the relevant files in the param file
 if [[ $OPT == "HMS" ]]; then
-    sed -i "s/hhodo_TWcalib_$RUNNUMBER.param/Calibration\/hhodo_TWcalib_$RUNNUMBER.param/" $REPLAYPATH/DBASE/COIN/HMS_HodoCalib/general_$RUNNUMBER.param 
-    if [ "$RUNNUMBER" -le "5334" ]; then
-	sed -i "s/hhodo_Vpcalib_Autumn18.param/Calibration\/hhodo_Vpcalib_$RUNNUMBER.param/" $REPLAYPATH/DBASE/COIN/HMS_HodoCalib/general_$RUNNUMBER.param
-    fi
-    if [ "$RUNNUMBER" -ge "5335" -a "$RUNNUMBER" -le "7045" ]; then
-	sed -i "s/hhodo_Vpcalib_Winter18.param/Calibration\/hhodo_Vpcalib_$RUNNUMBER.param/" $REPLAYPATH/DBASE/COIN/HMS_HodoCalib/general_$RUNNUMBER.param
-    fi
-    if [ "$RUNNUMBER" -ge "7046" -a "$RUNNUMBER" -le "8375" ]; then
-	sed -i "s/hhodo_Vpcalib_Spring19.param/Calibration\/hhodo_Vpcalib_$RUNNUMBER.param/" $REPLAYPATH/DBASE/COIN/HMS_HodoCalib/general_$RUNNUMBER.param
-    fi
-    if [ "$RUNNUMBER" -ge "8376" ]; then
-	sed -i "s/hhodo_Vpcalib_Spring19.param/Calibration\/hhodo_Vpcalib_$RUNNUMBER.param/" $REPLAYPATH/DBASE/COIN/HMS_HodoCalib/general_$RUNNUMBER.param
-    fi
+    sed -i "s/hhodo_Vpcalib.*/hhodo_Vpcalib_${RUNNUMBER}.param\"/" "${REPLAYPATH}/DBASE/COIN/${OPT}_HodoCalib/general_${RUNNUMBER}.param"
 elif [[ $OPT == "SHMS" ]]; then
-    sed -i "s/phodo_TWcalib_$RUNNUMBER.param/Calibration\/phodo_TWcalib_$RUNNUMBER.param/" $REPLAYPATH/DBASE/COIN/SHMS_HodoCalib/general_$RUNNUMBER.param 
-    if [ "$RUNNUMBER" -le "5334" ]; then
-	sed -i "s/phodo_Vpcalib_Autumn18.param/Calibration\/phodo_Vpcalib_$RUNNUMBER.param/" $REPLAYPATH/DBASE/COIN/SHMS_HodoCalib/general_$RUNNUMBER.param
-    fi
-    if [ "$RUNNUMBER" -ge "5335" -a "$RUNNUMBER" -le "7045" ]; then
-	sed -i "s/phodo_Vpcalib_Winter18.param/Calibration\/phodo_Vpcalib_$RUNNUMBER.param/" $REPLAYPATH/DBASE/COIN/SHMS_HodoCalib/general_$RUNNUMBER.param
-    fi
-    if [ "$RUNNUMBER" -ge "7046" -a "$RUNNUMBER" -le "8375" ]; then
-	sed -i "s/phodo_Vpcalib_Spring19.param/Calibration\/phodo_Vpcalib_$RUNNUMBER.param/" $REPLAYPATH/DBASE/COIN/SHMS_HodoCalib/general_$RUNNUMBER.param
-    fi
-    if [ "$RUNNUMBER" -ge "8376" ]; then
-	sed -i "s/phodo_Vpcalib_Spring19.param/Calibration\/phodo_Vpcalib_$RUNNUMBER.param/" $REPLAYPATH/DBASE/COIN/SHMS_HodoCalib/general_$RUNNUMBER.param
-    fi    
+    sed -i "s/phodo_Vpcalib.*/phodo_Vpcalib_${RUNNUMBER}.param\"/" "${REPLAYPATH}/DBASE/COIN/${OPT}_HodoCalib/general_${RUNNUMBER}.param"
 fi
 
 cd "$REPLAYPATH"
 eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/"$OPT"/PRODUCTION/"$OPT"Hodo_Calib_Coin_Pt3.C($RUNNUMBER,$MAXEVENTS)\""
+
+mv "$REPLAYPATH/PARAM/"$OPT"/HODO/"$specL"hodo_TWcalib_$RUNNUMBER.param" "$REPLAYPATH/PARAM/"$OPT"/HODO/Calibration/"$specL"hodo_TWcalib_$RUNNUMBER.param"
+mv "$REPLAYPATH/PARAM/"$OPT"/HODO/"$specL"hodo_Vpcalib_$RUNNUMBER.param" "$REPLAYPATH/PARAM/"$OPT"/HODO/Calibration/"$specL"hodo_Vpcalib_$RUNNUMBER.param"
+
 exit 0
