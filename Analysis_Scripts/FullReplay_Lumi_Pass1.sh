@@ -22,12 +22,14 @@ if [[ "${HOSTNAME}" = *"farm"* ]]; then
     REPLAYPATH="/group/c-pionlt/USERS/${USER}/hallc_replay_lt"
     if [[ "${HOSTNAME}" != *"ifarm"* ]]; then
 	source /site/12gev_phys/softenv.sh 2.3
+	source /apps/root/6.18.04/setroot_CUE.bash
     fi
     cd "$REPLAYPATH"
     source "$REPLAYPATH/setup.sh"
 elif [[ "${HOSTNAME}" = *"qcd"* ]]; then
     REPLAYPATH="/group/c-pionlt/USERS/${USER}/hallc_replay_lt"
     source /site/12gev_phys/softenv.sh 2.3
+    source /apps/root/6.18.04/setroot_CUE.bash
     cd "$REPLAYPATH"
     source "$REPLAYPATH/setup.sh" 
 elif [[ "${HOSTNAME}" = *"cdaq"* ]]; then
@@ -35,16 +37,16 @@ elif [[ "${HOSTNAME}" = *"cdaq"* ]]; then
 elif [[ "${HOSTNAME}" = *"phys.uregina.ca"* ]]; then
     REPLAYPATH="/home/${USER}/work/JLab/hallc_replay_lt"
 fi
-UTILPATH="${REPLAYPATH}/UTIL_KAONLT"
+UTILPATH="${REPLAYPATH}/UTIL_PION"
 cd $REPLAYPATH
 
 # Create and use BCM calib for file if it doesn't exist
-if [ ! -f "$REPLAYPATH/ROOTfiles/coin_replay_scalers_${RUNNUMBER}_150000.root" ]; then
+if [ ! -f "$REPLAYPATH/ROOTfiles/Scalers/coin_replay_scalers_${RUNNUMBER}_150000.root" ]; then
     eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/COIN/SCALERS/replay_coin_scalers.C($RUNNUMBER,150000)\""
     cd "$REPLAYPATH/CALIBRATION/bcm_current_map"
     root -b<<EOF 
 .L ScalerCalib.C+
-.x run.C("${REPLAYPATH}/ROOTfiles/coin_replay_scalers_${RUNNUMBER}_150000.root")
+.x run.C("${REPLAYPATH}/ROOTfiles/Scalers/coin_replay_scalers_${RUNNUMBER}_150000.root")
 .q  
 EOF
     mv bcmcurrent_$RUNNUMBER.param $REPLAYPATH/PARAM/HMS/BCM/CALIB/bcmcurrent_$RUNNUMBER.param
@@ -53,23 +55,23 @@ else echo "Scaler replayfile already found for this run in $REPLAYPATH/ROOTfiles
 fi
 
 # Run 50k replay for all events in file
-if [ ! -f "$REPLAYPATH/ROOTfiles/coin_replay_Full_Lumi_${RUNNUMBER}_100000.root" ]; then
+if [ ! -f "$REPLAYPATH/ROOTfiles/Analysis/Lumi/coin_replay_Full_Lumi_${RUNNUMBER}_100000.root" ]; then
     if [[ "${HOSTNAME}" != *"ifarm"* ]]; then
 	eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/COIN/PRODUCTION/FullReplay_coin_Lumi.C($RUNNUMBER,100000)\"" 
     elif [[ "${HOSTNAME}" == *"ifarm"* ]]; then
 	eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/COIN/PRODUCTION/FullReplay_coin_Lumi.C($RUNNUMBER,100000)\""
     fi
-else echo "100k replayfile already found for this run in $REPLAYPATH/ROOTfiles/ - Skipping replay step"
+else echo "100k replayfile already found for this run in $REPLAYPATH/ROOTfiles/Analysis/Lumi - Skipping replay step"
 fi
 
 # Run full replay for all events in file
-if [ ! -f "$REPLAYPATH/ROOTfiles/coin_replay_Full_Lumi_${RUNNUMBER}_${MAXEVENTS}.root" ]; then
+if [ ! -f "$REPLAYPATH/ROOTfiles/Analysis/Lumi/coin_replay_Full_Lumi_${RUNNUMBER}_${MAXEVENTS}.root" ]; then
     if [[ "${HOSTNAME}" != *"ifarm"* ]]; then
 	eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/COIN/PRODUCTION/FullReplay_coin_Lumi.C($RUNNUMBER,$MAXEVENTS)\"" 
     elif [[ "${HOSTNAME}" == *"ifarm"* ]]; then
 	eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/COIN/PRODUCTION/FullReplay_coin_Lumi.C($RUNNUMBER,$MAXEVENTS)\""
     fi
-else echo "All events replayfile already found for this run in $REPLAYPATH/ROOTfiles/ - Skipping replay step"
+else echo "All events replayfile already found for this run in $REPLAYPATH/ROOTfiles/Analysis/Lumi - Skipping replay step"
 fi
 
 exit 0

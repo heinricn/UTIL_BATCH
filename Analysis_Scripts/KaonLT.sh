@@ -1,29 +1,25 @@
 #!/bin/bash
 
 ### Stephen Kay, University of Regina
-### 13/01/21
+### 15/01/21
 ### stephen.kay@uregina.ca
 
 echo "Starting Replay script"
 echo "I take as arguments the Run Number and max number of events!"
 RUNNUMBER=$1
-### Note - Due to the way the HGC calibration script works, it may need to chain runs together
-### This script just processes a single run, users can chain together consecutive runs if they like, instructions on how to do this are printed
-### after running the batch job submission script
-### This script might be slightly redundant once the new calibration script suite is established
+MAXEVENTS=$2
 ### Check you've provided the an argument
-if [[ $1 -eq "" ]]; then
+if [[ -z "$1" ]]; then
     echo "I need a Run Number!"
     echo "Please provide a run number as input"
     exit 2
 fi
 ### Check if a second argument was provided, if not assume -1, if yes, this is max events
-if [[ $2 -eq "" ]]; then
+if [[ -z "$2" ]]; then
     MAXEVENTS=-1
-else
+elsex
     MAXEVENTS=$2
 fi
-
 if [[ ${USER} = "cdaq" ]]; then
     echo "Warning, running as cdaq."
     echo "Please be sure you want to do this."
@@ -51,34 +47,36 @@ elif [[ "${HOSTNAME}" = *"cdaq"* ]]; then
 elif [[ "${HOSTNAME}" = *"phys.uregina.ca"* ]]; then
     REPLAYPATH="/home/${USER}/work/JLab/hallc_replay_lt"
 fi
+UTILPATH="${REPLAYPATH}/UTIL_KAONLT"
 cd $REPLAYPATH
-
-# Create and use BCM calib for file if it doesn't exist
-if [ ! -f "$REPLAYPATH/ROOTfiles/Scalers/coin_replay_scalers_${RUNNUMBER}_150000.root" ]; then
-    eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/COIN/SCALERS/replay_coin_scalers.C($RUNNUMBER,150000)\""
+# Note, using the proton replay files is temporary! Need to fix up the replay scripts for KaonLT a little
+# Ideally, you want to do the same thing here though
+# 03/03/21 - Note, need to actually modify these KaonLT scripts still too
+if [ ! -f "$REPLAYPATH/UTIL_KAONLT/ROOTfiles/Scalers/coin_replay_scalers_${RUNNUMBER}_150000.root" ]; then
+    eval "$REPLAYPATH/hcana -l -q \"UTIL_KAONLT/scripts/replay/replay_coin_scalers.C($RUNNUMBER,150000)\""
     cd "$REPLAYPATH/CALIBRATION/bcm_current_map"
     root -b<<EOF 
 .L ScalerCalib.C+
-.x run.C("${REPLAYPATH}/ROOTfiles/Scalers/coin_replay_scalers_${RUNNUMBER}_150000.root")
+.x run.C("${REPLAYPATH}/UTIL_KAONLT/ROOTfiles/Scalers/coin_replay_scalers_${RUNNUMBER}_150000.root")
 .q  
 EOF
     mv bcmcurrent_$RUNNUMBER.param $REPLAYPATH/PARAM/HMS/BCM/CALIB/bcmcurrent_$RUNNUMBER.param
     cd $REPLAYPATH
-else echo "Scaler replayfile already found for this run in $REPLAYPATH/ROOTfiles/Scalers - Skipping scaler replay step"
+else echo "Scaler replayfile already found for this run in $REPLAYPATH/UTIL_KAONLT/ROOTfiles/Scalers - Skipping scaler replay step"
 fi
 sleep 15
-# Should use a slimmer replay script in future (def files here need slimming down)
-if [ ! -f "$REPLAYPATH/ROOTfiles/Calib/HGC/coin_replay_production_${RUNNUMBER}_${MAXEVENTS}.root" ]; then
+# 03/03/21 - SK, again these files will actually need updating too
+if [ ! -f "$REPLAYPATH/UTIL_KAONLT/ROOTfiles/Analysis/KaonLT/Kaon_coin_replay_production_${RUNNUMBER}_${MAXEVENTS}.root" ]; then
     if [[ "${HOSTNAME}" != *"ifarm"* ]]; then
-	eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/COIN/PRODUCTION/replay_production_coin_HGC.C($RUNNUMBER,$MAXEVENTS)\"" 
+	eval "$REPLAYPATH/hcana -l -q \"UTIL_KAONLT/scripts/replay/replay_production_coin.C($RUNNUMBER,$MAXEVENTS)\"" 
     elif [[ "${HOSTNAME}" == *"ifarm"* ]]; then
-	eval 
-	eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/COIN/PRODUCTION/replay_production_coin_HGC.C($RUNNUMBER,$MAXEVENTS)\""
+	eval "$REPLAYPATH/hcana -l -q \"UTIL_KAONLT/scripts/replay/replay_production_coin.C($RUNNUMBER,$MAXEVENTS)\""| tee $REPLAYPATH/UTIL_KAONLT/REPORT_OUTPUT/Analysis/KaonLT/Proton_output_coin_production_${RUNNUMBER}_${MAXEVENTS}.report
     fi
-else echo "Replayfile already found for this run in $REPLAYPATH/ROOTfiles/Calib/HGC - Skipping replay step"
+else echo "Replayfile already found for this run in $REPLAYPATH/UTIL_KAONLT/ROOTfiles/Analysis/KaonLT/ - Skipping replay step"
 fi
-sleep 15
-cd "$REPLAYPATH/CALIBRATION/shms_hgcer_calib"
-root -l -b -q "run_cal.C(\"coin_replay_production\", $MAXEVENTS, 1, $RUNNUMBER)" 
-sleep 15
+sleep 5
+# 03/03/21 - SK, again these files will actually need updating too
+cd "$UTILPATH/scripts/kaonyield"
+## The line below needs tweaking with the run prefix!
+eval '"Analyse_Kaons.sh" Kaon_coin_replay_production ${RUNNUMBER} ${MAXEVENTS}'
 exit 0
