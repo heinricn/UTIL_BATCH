@@ -11,8 +11,8 @@ historyfile=hist.$( date "+%Y-%m-%d_%H-%M-%S" ).log
 ##Output batch script##                                           
 batch="${USER}_Job.txt"
 ##Input run numbers##                                                                        
-#inputFile="/group/c-kaonlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/InputRunLists/Kaon_Data/ProductionLH2_ALL"
-inputFile="/group/c-kaonlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/InputRunLists/inputRuns"
+#inputFile="/group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/InputRunLists/Kaon_Data/ProductionLH2_ALL"
+inputFile="/group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/InputRunLists/inputRuns"
 ## Tape stub                                                                              
 MSSstub='/mss/hallc/spring17/raw/coin_all_%05d.dat'
 auger="augerID.tmp"
@@ -42,7 +42,7 @@ while true; do
                 echo "Running ${batch} for ${runNum}"
                 cp /dev/null ${batch}
                 ##Creation of batch script for submission##                                       
-                echo "PROJECT: c-kaonlt" >> ${batch}
+                echo "PROJECT: c-pionlt" >> ${batch}
                 echo "TRACK: analysis" >> ${batch}
                 #echo "TRACK: debug" >> ${batch} ### Use for testing                                  
                 echo "JOBNAME: ProtonAnalysis_${runNum}" >> ${batch}
@@ -56,7 +56,7 @@ while true; do
 		#echo "OS: general" >> ${batch}
                 echo "CPU: 1" >> ${batch} ### hcana single core, setting CPU higher will lower priority!
 		echo "INPUT_FILES: ${tape_file}" >> ${batch}
-		echo "COMMAND:/group/c-kaonlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/Analysis_Scripts/ProtonYield.sh ${runNum} ${MAXEVENTS}" >> ${batch}                                                        
+		echo "COMMAND:/group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/Analysis_Scripts/ProtonYield.sh ${runNum} ${MAXEVENTS}" >> ${batch}                                                        
 		echo "MAIL: ${USER}@jlab.org" >> ${batch}
                 echo "Submitting batch"
                 eval "jsub ${batch} 2>/dev/null"
