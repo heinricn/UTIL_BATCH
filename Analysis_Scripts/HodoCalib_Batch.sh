@@ -82,7 +82,7 @@ if [ ! -d "$REPLAYPATH/CALIBRATION/shms_hodo_calib/Calibration_Plots" ]; then
 fi
 
 eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/COIN/CALIBRATION/"$OPT"Hodo_Calib_Coin_Pt1.C($RUNNUMBER,$MAXEVENTS)\""
-ROOTFILE="$REPLAYPATH/ROOTfilesHodoCalib/"$OPT"_Hodo_Calib_Pt1_"$RUNNUMBER"_"$MAXEVENTS".root" 
+ROOTFILE="$REPLAYPATH/ROOTfiles/Calib/Hodo/"$OPT"_Hodo_Calib_Pt1_"$RUNNUMBER"_"$MAXEVENTS".root" 
 
 if [[ $OPT == "HMS" ]]; then
     spec="hms"
@@ -167,10 +167,12 @@ elif [[ $OPT == "SHMS" ]]; then
     sed -i "s/phodo_TWcalib.*/phodo_TWcalib_${RUNNUMBER}.param\"/" "${REPLAYPATH}/DBASE/COIN/${OPT}_HodoCalib/general_${RUNNUMBER}.param"
 fi
 
+sleep 5 #This should stop it from failing due to opening files before they're closed
+
 # Back to the main directory
 cd "$REPLAYPATH"                                
 # Off we go again replaying
-eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/"$OPT"/PRODUCTION/"$OPT"Hodo_Calib_Coin_Pt2.C($RUNNUMBER,$MAXEVENTS)\""
+eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/COIN/CALIBRATION/"$OPT"Hodo_Calib_Coin_Pt2.C($RUNNUMBER,$MAXEVENTS)\""
 
 # Clean up the directories of our generated files
 mv "$REPLAYPATH/CALIBRATION/"$spec"_hodo_calib/timeWalkHistos_"$RUNNUMBER".root" "$REPLAYPATH/CALIBRATION/"$spec"_hodo_calib/Calibration_Plots/timeWalkHistos_"$RUNNUMBER".root"
@@ -178,7 +180,7 @@ mv "$REPLAYPATH/CALIBRATION/"$spec"_hodo_calib/timeWalkCalib_"$RUNNUMBER".root" 
 
 cd "$REPLAYPATH/CALIBRATION/"$spec"_hodo_calib/"
 # Define the path to the second replay root file
-ROOTFILE2="$REPLAYPATH/ROOTfilesHodoCalib/"$OPT"_Hodo_Calib_Pt2_"$RUNNUMBER"_"$MAXEVENTS".root"
+ROOTFILE2="$REPLAYPATH/ROOTfiles/Calib/Hodo/"$OPT"_Hodo_Calib_Pt2_"$RUNNUMBER"_"$MAXEVENTS".root"
 # Execute final script
 root -l -q -b "$REPLAYPATH/CALIBRATION/"$spec"_hodo_calib/fitHodoCalib.C(\"$ROOTFILE2\", $RUNNUMBER)" 
 # Check our new file exists, if not exit, if yes, move it
@@ -206,8 +208,10 @@ elif [[ $OPT == "SHMS" ]]; then
     sed -i "s/phodo_Vpcalib.*/phodo_Vpcalib_${RUNNUMBER}.param\"/" "${REPLAYPATH}/DBASE/COIN/${OPT}_HodoCalib/general_${RUNNUMBER}.param"
 fi
 
+sleep 5
+
 cd "$REPLAYPATH"
-eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/"$OPT"/PRODUCTION/"$OPT"Hodo_Calib_Coin_Pt3.C($RUNNUMBER,$MAXEVENTS)\""
+eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/COIN/CALIBRATION/"$OPT"Hodo_Calib_Coin_Pt3.C($RUNNUMBER,$MAXEVENTS)\""
 
 mv "$REPLAYPATH/PARAM/"$OPT"/HODO/"$specL"hodo_TWcalib_$RUNNUMBER.param" "$REPLAYPATH/PARAM/"$OPT"/HODO/Calibration/"$specL"hodo_TWcalib_$RUNNUMBER.param"
 mv "$REPLAYPATH/PARAM/"$OPT"/HODO/"$specL"hodo_Vpcalib_$RUNNUMBER.param" "$REPLAYPATH/PARAM/"$OPT"/HODO/Calibration/"$specL"hodo_Vpcalib_$RUNNUMBER.param"
