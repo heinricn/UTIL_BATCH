@@ -5,23 +5,17 @@
 ### Note that the second part also has an additional bit where it checks for a database file based upon the run number
 
 RUNNUMBER=$1
-OPT=$2
 ### Check you've provided the first argument  
 if [[ $1 -eq "" ]]; then
     echo "I need a Run Number!"
     echo "Please provide a run number as input"
     exit 2
 fi
-### Check you have provided the second argument correctly
-if [[ ! $2 =~ ^("HMS"|"SHMS")$ ]]; then
-    echo "Please specify spectrometer, HMS or SHMS"
-    exit 2
-fi
-### Check if a third argument was provided, if not assume -1, if yes, this is max events
-if [[ $3 -eq "" ]]; then
+### Check if a Second argument was provided, if not assume -1, if yes, this is max events
+if [[ $2 -eq "" ]]; then
     MAXEVENTS=-1
 else
-    MAXEVENTS=$3
+    MAXEVENTS=$2
 fi
 
 # Set replaypath depending upon hostname. Change as needed
@@ -57,12 +51,8 @@ fi
 cd $REPLAYPATH
 
 ### Check the extra folders you'll need exist, if they don't then make them
-if [ ! -d "$REPLAYPATH/DBASE/COIN/HMS_HodoCalib" ]; then
-    mkdir "$REPLAYPATH/DBASE/COIN/HMS_HodoCalib"
-fi
-
-if [ ! -d "$REPLAYPATH/DBASE/COIN/SHMS_HodoCalib" ]; then
-    mkdir "$REPLAYPATH/DBASE/COIN/SHMS_HodoCalib"
+if [ ! -d "$REPLAYPATH/DBASE/COIN/HodoCalib" ]; then
+    mkdir "$REPLAYPATH/DBASE/COIN/HodoCalib"
 fi
 
 if [ ! -d "$REPLAYPATH/PARAM/HMS/HODO/Calibration" ]; then
@@ -81,30 +71,33 @@ if [ ! -d "$REPLAYPATH/CALIBRATION/shms_hodo_calib/Calibration_Plots" ]; then
     mkdir "$REPLAYPATH/CALIBRATION/shms_hodo_calib/Calibration_Plots"
 fi
 
-eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/COIN/CALIBRATION/"$OPT"Hodo_Calib_Coin_Pt1.C($RUNNUMBER,$MAXEVENTS)\""
-ROOTFILE="$REPLAYPATH/ROOTfiles/Calib/Hodo/"$OPT"_Hodo_Calib_Pt1_"$RUNNUMBER"_"$MAXEVENTS".root" 
+eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/COIN/CALIBRATION/Hodo_Calib_Coin_Pt1.C($RUNNUMBER,$MAXEVENTS)\""
+ROOTFILE="$REPLAYPATH/ROOTfiles/Calib/Hodo/Hodo_Calib_Pt1_"$RUNNUMBER"_"$MAXEVENTS".root" 
 
-if [[ $OPT == "HMS" ]]; then
-    spec="hms"
-    specL="h"
-elif [[ $OPT == "SHMS" ]]; then
-    spec="shms"
-    specL="p"
-fi
-
-cd "$REPLAYPATH/CALIBRATION/"$spec"_hodo_calib/"
-root -l -q -b "$REPLAYPATH/CALIBRATION/"$spec"_hodo_calib/timeWalkHistos.C(\"$ROOTFILE\", $RUNNUMBER, \"coin\")"
+#run analysis for both detectors
+cd "$REPLAYPATH/CALIBRATION/hms_hodo_calib/"
+root -l -q -b "$REPLAYPATH/CALIBRATION/hms_hodo_calib/timeWalkHistos.C(\"$ROOTFILE\", $RUNNUMBER, \"coin\")"
 sleep 5
-root -l -q -b "$REPLAYPATH/CALIBRATION/"$spec"_hodo_calib/timeWalkCalib.C($RUNNUMBER)"
+root -l -q -b "$REPLAYPATH/CALIBRATION/hms_hodo_calib/timeWalkCalib.C($RUNNUMBER)"
+sleep 1
+cd "$REPLAYPATH/CALIBRATION/shms_hodo_calib/"
+root -l -q -b "$REPLAYPATH/CALIBRATION/shms_hodo_calib/timeWalkHistos.C(\"$ROOTFILE\", $RUNNUMBER, \"coin\")"
+sleep 5
+root -l -q -b "$REPLAYPATH/CALIBRATION/shms_hodo_calib/timeWalkCalib.C($RUNNUMBER)"
 
-# After executing first two root scripts, should have a new .param file so long as scripts ran ok, IF NOT THEN EXIT
-if [ ! -f "$REPLAYPATH/PARAM/"$OPT"/HODO/"$specL"hodo_TWcalib_$RUNNUMBER.param" ]; then
-    echo ""$specL"hodo_TWCalib_$RUNNUMBER.param not found, calibration script likely failed"
+# After executing first two root scripts, should have a new .param files so long as scripts ran ok, IF NOT THEN EXIT
+if [ ! -f "$REPLAYPATH/PARAM/HMS/HODO/hhodo_TWcalib_$RUNNUMBER.param" ]; then
+    echo "hhodo_TWCalib_$RUNNUMBER.param not found, calibration script likely failed"
+    exit 2
+fi
+if [ ! -f "$REPLAYPATH/PARAM/SHMS/HODO/phodo_TWcalib_$RUNNUMBER.param" ]; then
+    echo "phodo_TWCalib_$RUNNUMBER.param not found, calibration script likely failed"
     exit 2
 fi
 
+
 # Need to find the DBASE file used in the previous replay, do this from the replay script used
-REPLAYSCRIPT1="${REPLAYPATH}/SCRIPTS/COIN/CALIBRATION/"$OPT"Hodo_Calib_Coin_Pt1.C"
+REPLAYSCRIPT1="${REPLAYPATH}/SCRIPTS/COIN/CALIBRATION/Hodo_Calib_Coin_Pt1.C"
 while IFS='' read -r line || [[ -n "$line" ]]; do
     if [[ $line =~ "//" ]]; then continue;
     elif [[ $line =~ "gHcParms->AddString(\"g_ctp_database_filename\"," ]]; then
@@ -152,68 +145,87 @@ if [[ ! -f "$BASE_DBASEFILE" || ! -f "$BASE_PARAMFILE_PATH" ]]; then
     exit 3
 fi
 
-echo "Copying $BASE_DBASEFILE and $BASE_PARAMFILE_PATH to ${OPT}_HodoCalib"
-cp "$BASE_DBASEFILE" "${REPLAYPATH}/DBASE/COIN/${OPT}_HodoCalib/standard_${RUNNUMBER}.database"
-cp "$BASE_PARAMFILE_PATH" "${REPLAYPATH}/DBASE/COIN/${OPT}_HodoCalib/general_${RUNNUMBER}.param"
+echo "Copying $BASE_DBASEFILE and $BASE_PARAMFILE_PATH to HodoCalib"
+cp "$BASE_DBASEFILE" "${REPLAYPATH}/DBASE/COIN/HodoCalib/standard_${RUNNUMBER}.database"
+cp "$BASE_PARAMFILE_PATH" "${REPLAYPATH}/DBASE/COIN/HodoCalib/general_${RUNNUMBER}.param"
 
 # Switch out the param file called in the dbase file
 # Sed command looks a bit different, need to use different quote/delimiters as variable uses / and so on
-sed -i 's|'"$BASE_PARAMFILE"'|'"DBASE/COIN/${OPT}_HodoCalib/general_$RUNNUMBER.param"'|' "${REPLAYPATH}/DBASE/COIN/${OPT}_HodoCalib/standard_${RUNNUMBER}.database"
+sed -i 's|'"$BASE_PARAMFILE"'|'"DBASE/COIN/HodoCalib/general_$RUNNUMBER.param"'|' "${REPLAYPATH}/DBASE/COIN/HodoCalib/standard_${RUNNUMBER}.database"
 
-# Depending upon spectrometer, switch out the relevant files in the param file
-if [[ $OPT == "HMS" ]]; then
-    sed -i "s/hhodo_TWcalib.*/hhodo_TWcalib_${RUNNUMBER}.param\"/" "${REPLAYPATH}/DBASE/COIN/${OPT}_HodoCalib/general_${RUNNUMBER}.param"
-elif [[ $OPT == "SHMS" ]]; then
-    sed -i "s/phodo_TWcalib.*/phodo_TWcalib_${RUNNUMBER}.param\"/" "${REPLAYPATH}/DBASE/COIN/${OPT}_HodoCalib/general_${RUNNUMBER}.param"
-fi
+# Switch out the relevant files in the param file
+sed -i "s/hhodo_TWcalib.*/hhodo_TWcalib_${RUNNUMBER}.param\"/" "${REPLAYPATH}/DBASE/COIN/HodoCalib/general_${RUNNUMBER}.param"
+sed -i "s/phodo_TWcalib.*/phodo_TWcalib_${RUNNUMBER}.param\"/" "${REPLAYPATH}/DBASE/COIN/HodoCalib/general_${RUNNUMBER}.param"
+
 
 sleep 5 #This should stop it from failing due to opening files before they're closed
 
 # Back to the main directory
 cd "$REPLAYPATH"                                
 # Off we go again replaying
-eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/COIN/CALIBRATION/"$OPT"Hodo_Calib_Coin_Pt2.C($RUNNUMBER,$MAXEVENTS)\""
+eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/COIN/CALIBRATION/Hodo_Calib_Coin_Pt2.C($RUNNUMBER,$MAXEVENTS)\""
 
 # Clean up the directories of our generated files
-mv "$REPLAYPATH/CALIBRATION/"$spec"_hodo_calib/timeWalkHistos_"$RUNNUMBER".root" "$REPLAYPATH/CALIBRATION/"$spec"_hodo_calib/Calibration_Plots/timeWalkHistos_"$RUNNUMBER".root"
-mv "$REPLAYPATH/CALIBRATION/"$spec"_hodo_calib/timeWalkCalib_"$RUNNUMBER".root" "$REPLAYPATH/CALIBRATION/"$spec"_hodo_calib/Calibration_Plots/timeWalkCalib_"$RUNNUMBER".root"
+mv "$REPLAYPATH/CALIBRATION/hms_hodo_calib/timeWalkHistos_"$RUNNUMBER".root" "$REPLAYPATH/CALIBRATION/hms_hodo_calib/Calibration_Plots/timeWalkHistos_"$RUNNUMBER".root"
+mv "$REPLAYPATH/CALIBRATION/hms_hodo_calib/timeWalkCalib_"$RUNNUMBER".root" "$REPLAYPATH/CALIBRATION/hms_hodo_calib/Calibration_Plots/timeWalkCalib_"$RUNNUMBER".root"
+mv "$REPLAYPATH/CALIBRATION/shms_hodo_calib/timeWalkHistos_"$RUNNUMBER".root" "$REPLAYPATH/CALIBRATION/shms_hodo_calib/Calibration_Plots/timeWalkHistos_"$RUNNUMBER".root"
+mv "$REPLAYPATH/CALIBRATION/shms_hodo_calib/timeWalkCalib_"$RUNNUMBER".root" "$REPLAYPATH/CALIBRATION/shms_hodo_calib/Calibration_Plots/timeWalkCalib_"$RUNNUMBER".root"
 
-cd "$REPLAYPATH/CALIBRATION/"$spec"_hodo_calib/"
+
 # Define the path to the second replay root file
-ROOTFILE2="$REPLAYPATH/ROOTfiles/Calib/Hodo/"$OPT"_Hodo_Calib_Pt2_"$RUNNUMBER"_"$MAXEVENTS".root"
-# Execute final script
-root -l -q -b "$REPLAYPATH/CALIBRATION/"$spec"_hodo_calib/fitHodoCalib.C(\"$ROOTFILE2\", $RUNNUMBER)" 
-# Check our new file exists, if not exit, if yes, move it
-if [ ! -f "$REPLAYPATH/PARAM/"$OPT"/HODO/"$specL"hodo_Vpcalib_$RUNNUMBER.param" ]; then
-    echo ""$specL"hodo_Vpcalib_$RUNNUMBER.param not found, calibration script likely failed"
+ROOTFILE2="$REPLAYPATH/ROOTfiles/Calib/Hodo/Hodo_Calib_Pt2_"$RUNNUMBER"_"$MAXEVENTS".root"
+# Execute final scripts
+cd "$REPLAYPATH/CALIBRATION/hms_hodo_calib/"
+root -l -q -b "$REPLAYPATH/CALIBRATION/hms_hodo_calib/fitHodoCalib.C(\"$ROOTFILE2\", $RUNNUMBER)" 
+
+cd "$REPLAYPATH/CALIBRATION/shms_hodo_calib/"
+root -l -q -b "$REPLAYPATH/CALIBRATION/shms_hodo_calib/fitHodoCalib.C(\"$ROOTFILE2\", $RUNNUMBER)" 
+
+# Check our new files exist, if not exit, if yes, move it
+if [ ! -f "$REPLAYPATH/PARAM/HMS/HODO/hhodo_Vpcalib_$RUNNUMBER.param" ]; then
+    echo "hhodo_Vpcalib_$RUNNUMBER.param not found, calibration script likely failed"
+    exit 2
+fi
+if [ ! -f "$REPLAYPATH/PARAM/HMS/HODO/phodo_Vpcalib_$RUNNUMBER.param" ]; then
+    echo "phodo_Vpcalib_$RUNNUMBER.param not found, calibration script likely failed"
     exit 2
 fi
 
 
 
-# Check our new file exists, if not exit, if yes, move it
-if [ ! -f "$REPLAYPATH/CALIBRATION/"$spec"_hodo_calib/HodoCalibPlots_$RUNNUMBER.root" ]; then
+# Check our new files exists, if not exit, if yes, move it
+if [ ! -f "$REPLAYPATH/CALIBRATION/hms_hodo_calib/HodoCalibPlots_$RUNNUMBER.root" ]; then
+    echo "HodoCalibPlots_$RUNNUMBER.root not found, calibration script likely failed"
+    exit 2
+fi
+if [ ! -f "$REPLAYPATH/CALIBRATION/shms_hodo_calib/HodoCalibPlots_$RUNNUMBER.root" ]; then
     echo "HodoCalibPlots_$RUNNUMBER.root not found, calibration script likely failed"
     exit 2
 fi
 
-mv "$REPLAYPATH/CALIBRATION/"$spec"_hodo_calib/HodoCalibPlots_$RUNNUMBER.root" "$REPLAYPATH/CALIBRATION/"$spec"_hodo_calib/Calibration_Plots/HodoCalibPlots_$RUNNUMBER.root"
+mv "$REPLAYPATH/CALIBRATION/hms_hodo_calib/HodoCalibPlots_$RUNNUMBER.root" "$REPLAYPATH/CALIBRATION/hms_hodo_calib/Calibration_Plots/HodoCalibPlots_$RUNNUMBER.root"
+mv "$REPLAYPATH/CALIBRATION/shms_hodo_calib/HodoCalibPlots_$RUNNUMBER.root" "$REPLAYPATH/CALIBRATION/shms_hodo_calib/Calibration_Plots/HodoCalibPlots_$RUNNUMBER.root"
 
 ### Now we set up the third replay by editing our general.param file
 cd "$REPLAYPATH/DBASE/COIN"
-# Depending upon spectrometer, switch out the relevant files in the param file
-if [[ $OPT == "HMS" ]]; then
-    sed -i "s/hhodo_Vpcalib.*/hhodo_Vpcalib_${RUNNUMBER}.param\"/" "${REPLAYPATH}/DBASE/COIN/${OPT}_HodoCalib/general_${RUNNUMBER}.param"
-elif [[ $OPT == "SHMS" ]]; then
-    sed -i "s/phodo_Vpcalib.*/phodo_Vpcalib_${RUNNUMBER}.param\"/" "${REPLAYPATH}/DBASE/COIN/${OPT}_HodoCalib/general_${RUNNUMBER}.param"
-fi
+# Switch out the relevant files in the param files
+sed -i "s/hhodo_Vpcalib.*/hhodo_Vpcalib_${RUNNUMBER}.param\"/" "${REPLAYPATH}/DBASE/COIN/${OPT}_HodoCalib/general_${RUNNUMBER}.param"
+sed -i "s/phodo_Vpcalib.*/phodo_Vpcalib_${RUNNUMBER}.param\"/" "${REPLAYPATH}/DBASE/COIN/${OPT}_HodoCalib/general_${RUNNUMBER}.param"
 
-sleep 5
+
+sleep 1
 
 cd "$REPLAYPATH"
-eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/COIN/CALIBRATION/"$OPT"Hodo_Calib_Coin_Pt3.C($RUNNUMBER,$MAXEVENTS)\""
+eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/COIN/CALIBRATION/Hodo_Calib_Coin_Pt3.C($RUNNUMBER,$MAXEVENTS)\""
 
-mv "$REPLAYPATH/PARAM/"$OPT"/HODO/"$specL"hodo_TWcalib_$RUNNUMBER.param" "$REPLAYPATH/PARAM/"$OPT"/HODO/Calibration/"$specL"hodo_TWcalib_$RUNNUMBER.param"
-mv "$REPLAYPATH/PARAM/"$OPT"/HODO/"$specL"hodo_Vpcalib_$RUNNUMBER.param" "$REPLAYPATH/PARAM/"$OPT"/HODO/Calibration/"$specL"hodo_Vpcalib_$RUNNUMBER.param"
+# Finished so put our new param files away
+mv "$REPLAYPATH/PARAM/HMS/HODO/hhodo_TWcalib_$RUNNUMBER.param" "$REPLAYPATH/PARAM/HMS/HODO/Calibration/hhodo_TWcalib_$RUNNUMBER.param"
+mv "$REPLAYPATH/PARAM/HMS/HODO/hhodo_Vpcalib_$RUNNUMBER.param" "$REPLAYPATH/PARAM/HMS/HODO/Calibration/hhodo_Vpcalib_$RUNNUMBER.param"
+
+mv "$REPLAYPATH/PARAM/SHMS/HODO/phodo_TWcalib_$RUNNUMBER.param" "$REPLAYPATH/PARAM/SHMS/HODO/Calibration/phodo_TWcalib_$RUNNUMBER.param"
+mv "$REPLAYPATH/PARAM/SHMS/HODO/phodo_Vpcalib_$RUNNUMBER.param" "$REPLAYPATH/PARAM/SHMS/HODO/Calibration/phodo_Vpcalib_$RUNNUMBER.param"
 
 exit 0
+
+
+

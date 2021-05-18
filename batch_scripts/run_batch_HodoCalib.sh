@@ -5,15 +5,8 @@
 
 echo "Running as ${USER}"
 
-SPEC=$1
-
-### Check you have provided the first argument correctly                                                                                                                                                         
-if [[ ! $1 =~ ^("HMS"|"SHMS")$ ]]; then
-    echo "Please specify spectrometer, HMS or SHMS"
-    exit 2
-fi
 ### Check if a second argument was provided, if not assume -1, if yes, this is max events                                                                                                                         
-if [[ $2 -eq "" ]]; then
+if [[ $1 -eq "" ]]; then
     MAXEVENTS=-1
 else
     MAXEVENTS=$2
@@ -48,6 +41,12 @@ while true; do
                 ##Run number#                                                                                                                                                                                     
                 runNum=$line
                 tape_file=`printf $MSSstub $runNum`
+        # Print the size of the raw .dat file (converted to GB) to screen. sed command reads line 3 of the tape stub without the leading size=
+	        TapeFileSize=$(($(sed -n '4 s/^[^=]*= *//p' < $tape_file)/1000000000))
+		if [[ $TapeFileSize == 0 ]];then
+		    TapeFileSize=2
+                fi
+		echo "Raw .dat file is "$TapeFileSize" GB"
                 tmp=tmp
                 ##Finds number of lines of input file##                                                                                                                                                           
                 numlines=$(eval "wc -l < ${inputFile}")
@@ -58,13 +57,17 @@ while true; do
                 echo "PROJECT: c-kaonlt" >> ${batch}
 		echo "TRACK: analysis" >> ${batch}
 		#echo "TRACK: debug" >> ${batch}
-                echo "JOBNAME: KaonLT_HodoCalib_${SPEC}_${runNum}" >> ${batch}
-		echo "DISK_SPACE: 20 GB" >>${batch}                                                                                                                                                             
-                echo "MEMORY: 2500 MB" >> ${batch}
+                echo "JOBNAME: KaonLT_HodoCalib_${runNum}" >> ${batch}
+		echo "DISK_SPACE: "$(( $TapeFileSize * 2 ))" GB" >> ${batch}
+		if [[ $TapeFileSize -le 45 ]]; then # Assign memory based on size of tape file, should keep this as low as possible!
+                    echo "MEMORY: 2500 MB" >> ${batch}
+                elif [[ $TapeFileSize -ge 45 ]]; then
+                    echo "MEMORY: 4000 MB" >> ${batch}
+                fi
                 #echo "OS: centos7" >> ${batch}
                 echo "CPU: 1" >> ${batch} ### hcana single core, setting CPU higher will lower priority!                                                                                                          
 		echo "INPUT_FILES: ${tape_file}" >> ${batch}
-		echo "COMMAND:/group/c-kaonlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/Analysis_Scripts/HodoCalib_Batch.sh ${runNum} ${SPEC} ${MAXEVENTS}" >> ${batch} 
+		echo "COMMAND:/group/c-kaonlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/Analysis_Scripts/HodoCalib_Batch.sh ${runNum} ${MAXEVENTS}" >> ${batch} 
                 echo "MAIL: ${USER}@jlab.org" >> ${batch}
                 echo "Submitting batch"
                 eval "jsub ${batch} 2>/dev/null"
