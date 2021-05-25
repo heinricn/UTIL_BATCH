@@ -72,15 +72,18 @@ if [ ! -d "$REPLAYPATH/CALIBRATION/shms_hodo_calib/Calibration_Plots" ]; then
     mkdir "$REPLAYPATH/CALIBRATION/shms_hodo_calib/Calibration_Plots"
 fi
 
+echo "Running First replay!"
 eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/COIN/CALIBRATION/Hodo_Calib_Coin_Pt1.C($RUNNUMBER,$MAXEVENTS)\""
 ROOTFILE="$REPLAYPATH/ROOTfiles/Calib/Hodo/Hodo_Calib_Pt1_"$RUNNUMBER"_"$MAXEVENTS".root" 
 
 #run analysis for both detectors
+echo "Running HMS TimeWalk Calibration"
 cd "$REPLAYPATH/CALIBRATION/hms_hodo_calib/"
 root -l -q -b "$REPLAYPATH/CALIBRATION/hms_hodo_calib/timeWalkHistos.C(\"$ROOTFILE\", $RUNNUMBER, \"coin\")"
 sleep 5
 root -l -q -b "$REPLAYPATH/CALIBRATION/hms_hodo_calib/timeWalkCalib.C($RUNNUMBER)"
 sleep 1
+echo "Running SHMS TimeWalk Calibration"
 cd "$REPLAYPATH/CALIBRATION/shms_hodo_calib/"
 root -l -q -b "$REPLAYPATH/CALIBRATION/shms_hodo_calib/timeWalkHistos.C(\"$ROOTFILE\", $RUNNUMBER, \"coin\")"
 sleep 5
@@ -164,6 +167,7 @@ sleep 5 #This should stop it from failing due to opening files before they're cl
 # Back to the main directory
 cd "$REPLAYPATH"                                
 # Off we go again replaying
+echo "Running second replay!"
 eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/COIN/CALIBRATION/Hodo_Calib_Coin_Pt2.C($RUNNUMBER,$MAXEVENTS)\""
 
 # Clean up the directories of our generated files
@@ -176,10 +180,12 @@ mv "$REPLAYPATH/CALIBRATION/shms_hodo_calib/timeWalkCalib_"$RUNNUMBER".root" "$R
 # Define the path to the second replay root file
 ROOTFILE2="$REPLAYPATH/ROOTfiles/Calib/Hodo/Hodo_Calib_Pt2_"$RUNNUMBER"_"$MAXEVENTS".root"
 # Execute final scripts
+echo "Running HMS Hodo Fits"
 cd "$REPLAYPATH/CALIBRATION/hms_hodo_calib/"
 root -l -q -b "$REPLAYPATH/CALIBRATION/hms_hodo_calib/fitHodoCalib.C(\"$ROOTFILE2\", $RUNNUMBER)" 
 
 cd "$REPLAYPATH/CALIBRATION/shms_hodo_calib/"
+echo "Running SHMS Hodo Fits"
 root -l -q -b "$REPLAYPATH/CALIBRATION/shms_hodo_calib/fitHodoCalib.C(\"$ROOTFILE2\", $RUNNUMBER)" 
 
 # Check our new files exist, if not exit, if yes, move it
@@ -217,6 +223,7 @@ sed -i "s/phodo_Vpcalib.*/phodo_Vpcalib_${RUNNUMBER}.param\"/" "${REPLAYPATH}/DB
 sleep 1
 
 cd "$REPLAYPATH"
+echo "Running Final replay!"
 eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/COIN/CALIBRATION/Hodo_Calib_Coin_Pt3.C($RUNNUMBER,$MAXEVENTS)\""
 
 # Finished so put our new param files away

@@ -60,7 +60,7 @@ while true; do
                 echo "JOBNAME: KaonLT_HodoCalib_${runNum}" >> ${batch}
 		echo "DISK_SPACE: "$(( $TapeFileSize * 3 ))" GB" >> ${batch}
 		if [[ $TapeFileSize -le 45 ]]; then # Assign memory based on size of tape file, should keep this as low as possible!
-                    echo "MEMORY: 3000 MB" >> ${batch}
+                    echo "MEMORY: 3500 MB" >> ${batch}
                 elif [[ $TapeFileSize -ge 45 ]]; then
                     echo "MEMORY: 5000 MB" >> ${batch}
                 fi
