@@ -76,14 +76,20 @@ echo "Running First replay!"
 eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/COIN/CALIBRATION/Hodo_Calib_Coin_Pt1.C($RUNNUMBER,$MAXEVENTS)\""
 ROOTFILE="$REPLAYPATH/ROOTfiles/Calib/Hodo/Hodo_Calib_Pt1_"$RUNNUMBER"_"$MAXEVENTS".root" 
 
+sleep 5
+
 #run analysis for both detectors
+echo "********************************"
 echo "Running HMS TimeWalk Calibration"
+echo "********************************" 
 cd "$REPLAYPATH/CALIBRATION/hms_hodo_calib/"
 root -l -q -b "$REPLAYPATH/CALIBRATION/hms_hodo_calib/timeWalkHistos.C(\"$ROOTFILE\", $RUNNUMBER, \"coin\")"
 sleep 5
 root -l -q -b "$REPLAYPATH/CALIBRATION/hms_hodo_calib/timeWalkCalib.C($RUNNUMBER)"
 sleep 1
+echo "*********************************" 
 echo "Running SHMS TimeWalk Calibration"
+echo "*********************************" 
 cd "$REPLAYPATH/CALIBRATION/shms_hodo_calib/"
 root -l -q -b "$REPLAYPATH/CALIBRATION/shms_hodo_calib/timeWalkHistos.C(\"$ROOTFILE\", $RUNNUMBER, \"coin\")"
 sleep 5
@@ -167,7 +173,9 @@ sleep 5 #This should stop it from failing due to opening files before they're cl
 # Back to the main directory
 cd "$REPLAYPATH"                                
 # Off we go again replaying
-echo "Running second replay!"
+echo "********************************" 
+echo "    Running second replay!"
+echo "********************************" 
 eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/COIN/CALIBRATION/Hodo_Calib_Coin_Pt2.C($RUNNUMBER,$MAXEVENTS)\""
 
 # Clean up the directories of our generated files
@@ -176,16 +184,22 @@ mv "$REPLAYPATH/CALIBRATION/hms_hodo_calib/timeWalkCalib_"$RUNNUMBER".root" "$RE
 mv "$REPLAYPATH/CALIBRATION/shms_hodo_calib/timeWalkHistos_"$RUNNUMBER".root" "$REPLAYPATH/CALIBRATION/shms_hodo_calib/Calibration_Plots/timeWalkHistos_"$RUNNUMBER".root"
 mv "$REPLAYPATH/CALIBRATION/shms_hodo_calib/timeWalkCalib_"$RUNNUMBER".root" "$REPLAYPATH/CALIBRATION/shms_hodo_calib/Calibration_Plots/timeWalkCalib_"$RUNNUMBER".root"
 
+sleep 5
 
 # Define the path to the second replay root file
 ROOTFILE2="$REPLAYPATH/ROOTfiles/Calib/Hodo/Hodo_Calib_Pt2_"$RUNNUMBER"_"$MAXEVENTS".root"
+
 # Execute final scripts
-echo "Running HMS Hodo Fits"
+echo "********************************" 
+echo "    Running HMS Hodo Fits"
+echo "********************************" 
 cd "$REPLAYPATH/CALIBRATION/hms_hodo_calib/"
 root -l -q -b "$REPLAYPATH/CALIBRATION/hms_hodo_calib/fitHodoCalib.C(\"$ROOTFILE2\", $RUNNUMBER)" 
 
+echo "********************************" 
+echo "    Running SHMS Hodo Fits"
+echo "********************************" 
 cd "$REPLAYPATH/CALIBRATION/shms_hodo_calib/"
-echo "Running SHMS Hodo Fits"
 root -l -q -b "$REPLAYPATH/CALIBRATION/shms_hodo_calib/fitHodoCalib.C(\"$ROOTFILE2\", $RUNNUMBER)" 
 
 # Check our new files exist, if not exit, if yes, move it
@@ -216,14 +230,16 @@ mv "$REPLAYPATH/CALIBRATION/shms_hodo_calib/HodoCalibPlots_$RUNNUMBER.root" "$RE
 ### Now we set up the third replay by editing our general.param file
 cd "$REPLAYPATH/DBASE/COIN"
 # Switch out the relevant files in the param files
-sed -i "s/hhodo_Vpcalib.*/hhodo_Vpcalib_${RUNNUMBER}.param\"/" "${REPLAYPATH}/DBASE/COIN/${OPT}_HodoCalib/general_${RUNNUMBER}.param"
-sed -i "s/phodo_Vpcalib.*/phodo_Vpcalib_${RUNNUMBER}.param\"/" "${REPLAYPATH}/DBASE/COIN/${OPT}_HodoCalib/general_${RUNNUMBER}.param"
+sed -i "s/hhodo_Vpcalib.*/hhodo_Vpcalib_${RUNNUMBER}.param\"/" "${REPLAYPATH}/DBASE/COIN/HodoCalib/general_${RUNNUMBER}.param"
+sed -i "s/phodo_Vpcalib.*/phodo_Vpcalib_${RUNNUMBER}.param\"/" "${REPLAYPATH}/DBASE/COIN/HodoCalib/general_${RUNNUMBER}.param"
 
 
 sleep 1
 
 cd "$REPLAYPATH"
-echo "Running Final replay!"
+echo "********************************" 
+echo "     Running Final replay!"
+echo "********************************" 
 eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/COIN/CALIBRATION/Hodo_Calib_Coin_Pt3.C($RUNNUMBER,$MAXEVENTS)\""
 
 # Finished so put our new param files away
