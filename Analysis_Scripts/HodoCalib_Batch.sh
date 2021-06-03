@@ -30,12 +30,9 @@ fi
 if [[ "${HOSTNAME}" = *"farm"* ]]; then  
     REPLAYPATH="/group/c-kaonlt/USERS/${USER}/hallc_replay_lt"
     if [[ "${HOSTNAME}" != *"ifarm"* ]]; then
-<<<<<<< HEAD
-	source "/site/12gev_phys/softenv.sh 2.3"
-=======
+	#source "/site/12gev_phys/softenv.sh 2.3"
 	source /site/12gev_phys/softenv.sh 2.3
         source /apps/root/6.18.04/setroot_CUE.bash #set ROOT Version
->>>>>>> 7172b8bc847dacb9d921ff7ec65ddeb3ee72e420
     fi
     cd "/group/c-kaonlt/hcana/"
     source "/group/c-kaonlt/hcana/setup.sh"

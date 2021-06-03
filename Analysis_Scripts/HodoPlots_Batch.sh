@@ -5,7 +5,7 @@
 ### Its recomended That you run run_batch_HodoCalib.sh for the same input run list first
 
 RUNLIST=$1
-if [[ $1 -eq "" ]]; then
+if [[ -z $1 ]]; then
     echo "I need a File with the run list!"
     echo "Please provide the name to a file in UTIL_BATCH/InputRunLists/"
     exit 2
@@ -23,7 +23,7 @@ fi
 if [[ "${HOSTNAME}" = *"farm"* ]]; then  
     REPLAYPATH="/group/c-kaonlt/USERS/${USER}/hallc_replay_lt"
     if [[ "${HOSTNAME}" != *"ifarm"* ]]; then
-	source "/site/12gev_phys/softenv.sh 2.3"
+	source /site/12gev_phys/softenv.sh 2.3
     fi
     cd "/group/c-kaonlt/hcana/"
     source "/group/c-kaonlt/hcana/setup.sh"
@@ -42,7 +42,7 @@ elif [[ "${HOSTNAME}" = *"phys.uregina.ca"* ]]; then
     REPLAYPATH="/home/${USER}/work/JLab/hallc_replay_lt"
 fi
 
-if [[ ! -f "$REPLAYPATH/UTIL_BATCH/InputRunLists/$RUNLIST" ]]
+if [[ ! -f "$REPLAYPATH/UTIL_BATCH/InputRunLists/$RUNLIST" ]]; then
 	echo "$REPLAYPATH/UTIL_BATCH/InputRunLists/$RUNLIST not found"
 	echo "Check to make sure File is in the right place!"
 	echo "exiting"
@@ -59,10 +59,10 @@ echo "Running SHMS plotBeta.C"
 root -l -q -b "$REPLAYPATH/CALIBRATION/shms_hodo_calib/plotBeta.C(\"$REPLAYPATH/UTIL_BATCH/InputRunLists/$RUNLIST\")"
 
 echo "Running HMS HodoParamCompair"
-root -l -q -b "$REPLAYPATH/CALIBRATION/shms_hodo_calib/HodoParamCompair.C(\"$REPLAYPATH/UTIL_BATCH/InputRunLists/$RUNLIST\")"
+root -l -q -b "$REPLAYPATH/CALIBRATION/hms_hodo_calib/HodoParamCompair.C(\"$REPLAYPATH/UTIL_BATCH/InputRunLists/$RUNLIST\")"
 
 echo "Running HMS plotBeta.C"
-root -l -q -b "$REPLAYPATH/CALIBRATION/shms_hodo_calib/plotBeta.C(\"$REPLAYPATH/UTIL_BATCH/InputRunLists/$RUNLIST\")"
+root -l -q -b "$REPLAYPATH/CALIBRATION/hms_hodo_calib/plotBeta.C(\"$REPLAYPATH/UTIL_BATCH/InputRunLists/$RUNLIST\")"
 
 exit 0
 
