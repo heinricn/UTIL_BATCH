@@ -5,8 +5,15 @@
 
 echo "Running as ${USER}"
 
+inputFile=$1
+if [[ -z "$1" ]]; then
+    echo "I need a run list process!"
+    echo "Please provide a run list as input"
+    exit 2
+fi
+
 ### Check if a second argument was provided, if not assume -1, if yes, this is max events                                                                                                                         
-if [[ $1 -eq "" ]]; then
+if [[ $2 -eq "" ]]; then
     MAXEVENTS=-1
 else
     MAXEVENTS=$2
@@ -20,7 +27,7 @@ batch="${USER}_Job.txt"
 
 ##Input run numbers##                                                                                                                                                                                             
 #inputFile="/group/c-kaonlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/InputRunLists/Carbon_ALL" 
-inputFile="/group/c-kaonlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/InputRunLists/TestRun7872"
+#inputFile="/group/c-kaonlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/InputRunLists/TestRun7872"
 
 ## Tape stub                                                                                                                                                                                                      
 MSSstub='/mss/hallc/spring17/raw/coin_all_%05d.dat'
