@@ -5,7 +5,7 @@
 
 echo "Running as ${USER}"
 
-inputFile=$1
+inputFile="/group/c-kaonlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/InputRunLists/${1}"
 if [[ -z "$1" ]]; then
     echo "I need a run list process!"
     echo "Please provide a run list as input"
