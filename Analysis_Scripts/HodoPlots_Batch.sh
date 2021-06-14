@@ -11,6 +11,12 @@ if [[ -z $1 ]]; then
     exit 2
 fi
 
+if [[ $2 -eq "" ]]; then
+    MAXEVENTS=-1
+else
+    MAXEVENTS=$2
+fi
+
 # Set replaypath depending upon hostname. Change as needed
 if [[ ${USER} = "cdaq" ]]; then
     echo "Warning, running as cdaq."
@@ -56,13 +62,13 @@ echo "Running SHMS HodoParamCompair"
 root -l -q -b "$REPLAYPATH/CALIBRATION/shms_hodo_calib/HodoParamCompair.C(\"$REPLAYPATH/UTIL_BATCH/InputRunLists/$RUNLIST\")"
 
 echo "Running SHMS plotBeta.C"
-root -l -q -b "$REPLAYPATH/CALIBRATION/shms_hodo_calib/plotBeta.C(\"$REPLAYPATH/UTIL_BATCH/InputRunLists/$RUNLIST\")"
+root -l -q -b "$REPLAYPATH/CALIBRATION/shms_hodo_calib/plotBeta.C(\"$REPLAYPATH/UTIL_BATCH/InputRunLists/$RUNLIST\", ${MAXEVENTS})"
 
 echo "Running HMS HodoParamCompair"
 root -l -q -b "$REPLAYPATH/CALIBRATION/hms_hodo_calib/HodoParamCompair.C(\"$REPLAYPATH/UTIL_BATCH/InputRunLists/$RUNLIST\")"
 
 echo "Running HMS plotBeta.C"
-root -l -q -b "$REPLAYPATH/CALIBRATION/hms_hodo_calib/plotBeta.C(\"$REPLAYPATH/UTIL_BATCH/InputRunLists/$RUNLIST\")"
+root -l -q -b "$REPLAYPATH/CALIBRATION/hms_hodo_calib/plotBeta.C(\"$REPLAYPATH/UTIL_BATCH/InputRunLists/$RUNLIST\", ${MAXEVENTS})"
 
 exit 0
 

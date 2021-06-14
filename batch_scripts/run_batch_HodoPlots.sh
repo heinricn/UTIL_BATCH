@@ -16,6 +16,13 @@ if [ -z "$INPUTFILE" ]; then
 	exit 2
 fi
 
+### Check if a second argument was provided, if not assume -1, if yes, this is max events                                                                                                                         
+if [[ $2 -eq "" ]]; then
+    MAXEVENTS=-1
+else
+    MAXEVENTS=$2
+fi
+
 ##Output history file##                                                                                                                                                                                           
 historyfile=hist.$( date "+%Y-%m-%d_%H-%M-%S" ).log
 
@@ -31,7 +38,7 @@ echo "MEMORY: 4000 MB" >> ${batch}
 #echo "OS: centos7" >> ${batch}
 echo "CPU: 1" >> ${batch} ### hcana single core, setting CPU higher will lower priority!                                                                                                          
 echo "INPUT_FILES: ${tape_file}" >> ${batch}
-echo "COMMAND:/group/c-kaonlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/Analysis_Scripts/HodoPlots_Batch.sh ${INPUTFILE}" >> ${batch} 
+echo "COMMAND:/group/c-kaonlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/Analysis_Scripts/HodoPlots_Batch.sh ${INPUTFILE} ${MAXEVENTS}" >> ${batch} 
 echo "MAIL: ${USER}@jlab.org" >> ${batch}
 
 echo "Submitting batch"
