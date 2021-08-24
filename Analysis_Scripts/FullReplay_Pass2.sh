@@ -1,14 +1,23 @@
 #!/bin/bash
 
+### Stephen Kay, University of Regina
+### 18/05/21
+### The analysis script used to process the Pass2 full replay
+
 echo "Starting Replay script"
 echo "I take as arguments the Run Number and max number of events!"
 RUNNUMBER=$1
-MAXEVENTS=-1
+MAXEVENTS=$2
 ### Check you've provided the an argument
 if [[ $1 -eq "" ]]; then
     echo "I need a Run Number!"
     echo "Please provide a run number as input"
     exit 2
+fi
+if [[ -z "$2" ]]; then
+    MAXEVENTS=-1
+else
+    MAXEVENTS=$2
 fi
 if [[ ${USER} = "cdaq" ]]; then
     echo "Warning, running as cdaq."
@@ -24,12 +33,16 @@ if [[ "${HOSTNAME}" = *"farm"* ]]; then
 	source /site/12gev_phys/softenv.sh 2.3
 	source /apps/root/6.18.04/setroot_CUE.bash
     fi
+    cd "/group/c-pionlt/hcana/"
+    source "/group/c-pionlt/hcana/setup.sh"
     cd "$REPLAYPATH"
     source "$REPLAYPATH/setup.sh"
 elif [[ "${HOSTNAME}" = *"qcd"* ]]; then
     REPLAYPATH="/group/c-pionlt/USERS/${USER}/hallc_replay_lt"
     source /site/12gev_phys/softenv.sh 2.3
     source /apps/root/6.18.04/setroot_CUE.bash
+    cd "/group/c-pionlt/hcana/"
+    source "/group/c-pionlt/hcana/setup.sh" 
     cd "$REPLAYPATH"
     source "$REPLAYPATH/setup.sh" 
 elif [[ "${HOSTNAME}" = *"cdaq"* ]]; then
@@ -37,41 +50,21 @@ elif [[ "${HOSTNAME}" = *"cdaq"* ]]; then
 elif [[ "${HOSTNAME}" = *"phys.uregina.ca"* ]]; then
     REPLAYPATH="/home/${USER}/work/JLab/hallc_replay_lt"
 fi
-UTILPATH="${REPLAYPATH}/UTIL_PION"
 cd $REPLAYPATH
 
-# Create and use BCM calib for file if it doesn't exist
-if [ ! -f "$REPLAYPATH/ROOTfiles/Scalers/coin_replay_scalers_${RUNNUMBER}_150000.root" ]; then
-    eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/COIN/SCALERS/replay_coin_scalers.C($RUNNUMBER,150000)\""
+if [ ! -f "$REPLAYPATH/ROOTfiles/Scalers/coin_replay_scalers_${RUNNUMBER}_${MAXEVENTS}.root" ]; then
+    eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/COIN/SCALERS/replay_coin_scalers.C($RUNNUMBER,${MAXEVENTS})\""
     cd "$REPLAYPATH/CALIBRATION/bcm_current_map"
     root -b<<EOF 
 .L ScalerCalib.C+
-.x run.C("${REPLAYPATH}/ROOTfiles/Scalers/coin_replay_scalers_${RUNNUMBER}_150000.root")
+.x run.C("${REPLAYPATH}/ROOTfiles/Scalers/coin_replay_scalers_${RUNNUMBER}_${MAXEVENTS}.root")
 .q  
 EOF
     mv bcmcurrent_$RUNNUMBER.param $REPLAYPATH/PARAM/HMS/BCM/CALIB/bcmcurrent_$RUNNUMBER.param
     cd $REPLAYPATH
 else echo "Scaler replayfile already found for this run in $REPLAYPATH/ROOTfiles/Scalers - Skipping scaler replay step"
 fi
-sleep 30
-# Run 100k replay for all events in file
-if [ ! -f "$REPLAYPATH/ROOTfiles/Analysis/Production/coin_replay_Full_${RUNNUMBER}_100000.root" ]; then
-    if [[ "${HOSTNAME}" != *"ifarm"* ]]; then
-	eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/COIN/PRODUCTION/FullReplay.C($RUNNUMBER,100000)\""
-    elif [[ "${HOSTNAME}" == *"ifarm"* ]]; then
-	eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/COIN/PRODUCTION/FullReplay.C($RUNNUMBER,100000)\""
-    fi
-else echo "100k replayfile already found for this run in $REPLAYPATH/ROOTfiles/Analysis/Production/ - Skipping replay step"
-fi
-sleep 30
-# Run full replay for all events in file
-if [ ! -f "$REPLAYPATH/ROOTfiles/Analysis/Production/coin_replay_Full_${RUNNUMBER}_${MAXEVENTS}.root" ]; then
-    if [[ "${HOSTNAME}" != *"ifarm"* ]]; then
-	eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/COIN/PRODUCTION/FullReplay.C($RUNNUMBER,$MAXEVENTS)\"" 
-    elif [[ "${HOSTNAME}" == *"ifarm"* ]]; then
-	eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/COIN/PRODUCTION/FullReplay.C($RUNNUMBER,$MAXEVENTS)\""
-    fi
-else echo "All events replayfile already found for this run in $REPLAYPATH/ROOTfiles/Analysis/Production/ - Skipping replay step"
-fi
-sleep 30
+sleep 15
+echo -e "\n\nStarting Replay Script\n\n"
+eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/COIN/PRODUCTION/FullReplay.C($RUNNUMBER,$MAXEVENTS)\""
 exit 0

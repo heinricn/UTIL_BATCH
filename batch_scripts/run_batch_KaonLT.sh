@@ -1,6 +1,9 @@
-#! /bin/bash 
+#! /bin/bash
 
-##### A batch submission script based on an earlier version by Richard
+### Stephen Kay, University of Regina
+### 03/03/21
+### stephen.kay@uregina.ca
+### A batch submission script based on an earlier version by Richard Trotta, Catholic University of America
 
 echo "Running as ${USER}"
 ### Check if an argument was provided, if not assume -1, if yes, this is max events
@@ -17,15 +20,10 @@ else
 fi
 ##Output history file##                                                                                            
 historyfile=hist.$( date "+%Y-%m-%d_%H-%M-%S" ).log
-
 ##Output batch script##                                                                     
 batch="${USER}_Job.txt"
-
-##Input run numbers##                                                                      
-##Point this to the location of your input run list                                           
-inputFile="/group/c-kaonlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/InputRunLists/${RunList}"
-#inputFile="/group/c-kaonlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/InputRunLists/Kaon_Data/ProductionLH2_ALL"
-
+##Input run numbers##
+inputFile="/group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/InputRunLists/${RunList}"
 ## Tape stub, you can point directly to a taped file and the farm job will do the jgetting for you, don't call it in your script!                                                      
 MSSstub='/mss/hallc/spring17/raw/coin_all_%05d.dat'
 auger="augerID.tmp"
@@ -41,8 +39,10 @@ while true; do
                 echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
                 echo "Run number read from file: $line"
                 echo ""
-                ##Run number#                                                                                                                                                                                     
+                ##Run number#
                 runNum=$line
+		##Output batch job text file##
+		batch="${USER}_${runNum}_KaonLT_Job.txt"
                 tape_file=`printf $MSSstub $runNum`
 		# Print the size of the raw .dat file (converted to GB) to screen. sed command reads line 3 of the tape stub without the leading size=
 	        TapeFileSize=$(($(sed -n '4 s/^[^=]*= *//p' < $tape_file)/1000000000))
@@ -51,47 +51,34 @@ while true; do
                 fi
 		echo "Raw .dat file is "$TapeFileSize" GB"
                 tmp=tmp
-                ##Finds number of lines of input file##                                                                                                                       
+                ##Finds number of lines of input file##                                  
                 numlines=$(eval "wc -l < ${inputFile}")
                 echo "Job $(( $i + 2 ))/$(( $numlines +1 ))"
                 echo "Running ${batch} for ${runNum}"
                 cp /dev/null ${batch}
-                ##Creation of batch script for submission##                                                                                                                                                       
+                ##Creation of batch script for submission##
                 echo "PROJECT: c-kaonlt" >> ${batch} # Or whatever your project is!
 		echo "TRACK: analysis" >> ${batch} ## Use this track for production running
 		#echo "TRACK: debug" >> ${batch} ### Use this track for testing, higher priority
-                echo "JOBNAME: ProtonLT_${runNum}" >> ${batch} ## Change to be more specific if you want
+                echo "JOBNAME: KaonLT_${runNum}" >> ${batch} ## Change to be more specific if you want
 		# Request double the tape file size in space, for trunctuated replays edit down as needed
 		# Note, unless this is set typically replays will produce broken root files
 		echo "DISK_SPACE: "$(( $TapeFileSize * 2 ))" GB" >> ${batch}
 		if [[ $TapeFileSize -le 45 ]]; then # Assign memory based on size of tape file, should keep this as low as possible!
-                    echo "MEMORY: 2500 MB" >> ${batch}
-                elif [[ $TapeFileSize -ge 45 ]]; then
                     echo "MEMORY: 4000 MB" >> ${batch}
+                elif [[ $TapeFileSize -ge 45 ]]; then
+                    echo "MEMORY: 6000 MB" >> ${batch}
                 fi
 		echo "CPU: 1" >> ${batch} ### hcana is single core, setting CPU higher will lower priority and gain you nothing!
 		echo "INPUT_FILES: ${tape_file}" >> ${batch}
-                echo "COMMAND:/group/c-kaonlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/Analysis_Scripts/NewProtonLT.sh ${runNum} ${MAXEVENTS}"  >> ${batch} ### Insert your script at end!
+                echo "COMMAND:/group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/Analysis_Scripts/KaonLT.sh ${runNum} ${MAXEVENTS}"  >> ${batch}
                 echo "MAIL: ${USER}@jlab.org" >> ${batch}
                 echo "Submitting batch"
                 eval "jsub ${batch} 2>/dev/null"
                 echo " "
                 i=$(( $i + 1 ))
-                # string=$(cat ${inputFile} |tr "\n" " ")
-                # ##Converts input file to an array##
-                # rnum=($string)                                  
-                # eval "jobstat -u ${USER} 2>/dev/null" > ${tmp}
-                # ##Loop to find ID number of each run number##   
-		# for j in "${rnum[@]}"
-		# do
-		#     if [ $(grep -c $j ${tmp}) -gt 0 ]; then
-		# 	ID=$(echo $(grep $j ${tmp}) | head -c 8)
-		# 	#ID=$(echo $(grep $j ${tmp}) | head -c 8) 
-		# 	augerID[$i]=$ID
-		# 	echo "${augerID[@]}" >> $auger
-		#     fi	
-		# done   
-		# echo "${rnum[$i]} has an AugerID of ${augerID[$i]}" 
+		sleep 2
+		rm ${batch}
 		if [ $i == $numlines ]; then
 		    echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 		    echo " "

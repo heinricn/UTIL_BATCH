@@ -1,19 +1,26 @@
 #! /bin/bash
 
-##### A batch submission script by Richard, insert the required script you want to batch run on line 51
-##### Modify required resources as needed!
+### Stephen Kay, University of Regina
+### 03/03/21
+### stephen.kay@uregina.ca
+### A batch submission script based on an earlier version by Richard Trotta, Catholic University of America
+
 echo "Running as ${USER}"
+RunList=$1
+if [[ -z "$1" ]]; then
+    echo "I need a run list process!"
+    echo "Please provide a run list as input"
+    exit 2
+fi
 
 ##Output history file##
 historyfile=hist.$( date "+%Y-%m-%d_%H-%M-%S" ).log
 ##Output batch script##
 batch="${USER}_Job.txt"
 ##Input run numbers##
-inputFile="/group/c-kaonlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/InputRunLists/inputRuns"
-#inputFile="/group/c-kaonlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/InputRunLists/Calib_Runs_All"
+inputFile="/group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/InputRunLists/${RunList}"
 ## Tape stub
 MSSstub='/mss/hallc/spring17/raw/coin_all_%05d.dat'
-
 auger="augerID.tmp"
 
 while true; do
@@ -45,38 +52,23 @@ while true; do
                 echo "PROJECT: c-kaonlt" >> ${batch}
                 echo "TRACK: analysis" >> ${batch}
                 #echo "TRACK: debug" >> ${batch} ### Use for testing
-                echo "JOBNAME: KaonLT_${runNum}" >> ${batch}
+                echo "JOBNAME: PionLT_${runNum}" >> ${batch}
                 # Request disk space depending upon raw file size
                 echo "DISK_SPACE: "$(( $TapeFileSize * 2 ))" GB" >> ${batch}
 		if [[ $TapeFileSize -le 45 ]]; then
-		    echo "MEMORY: 2500 MB" >> ${batch}
+		    echo "MEMORY: 3000 MB" >> ${batch}
 		elif [[ $TapeFileSize -ge 45 ]]; then
 		    echo "MEMORY: 4000 MB" >> ${batch}
 		fi
-		##echo "OS: centos7" >> ${batch}
                 echo "CPU: 1" >> ${batch} ### hcana single core, setting CPU higher will lower priority!
 		echo "INPUT_FILES: ${tape_file}" >> ${batch}
 		#echo "TIME: 1" >> ${batch} 
-		echo "COMMAND:/group/c-kaonlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/Analysis_Scripts/FullReplay_Batch_SetPedDef.sh ${runNum}" >> ${batch}
+		echo "COMMAND:/group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/Analysis_Scripts/FullReplay_Batch_SetPedDef.sh ${runNum}" >> ${batch}
 		echo "MAIL: ${USER}@jlab.org" >> ${batch}
                 echo "Submitting batch"
                 eval "jsub ${batch} 2>/dev/null"
                 echo " "
                 i=$(( $i + 1 ))
-                string=$(cat ${inputFile} |tr "\n" " ")
-                ##Converts input file to an array##
-                rnum=($string)                             
-                eval "jobstat -u ${USER} 2>/dev/null" > ${tmp}
-                ##Loop to find ID number of each run number##   
-		for j in "${rnum[@]}"
-		do
-		    if [ $(grep -c $j ${tmp}) -gt 0 ]; then
-			ID=$(echo $(grep $j ${tmp}) | head -c 8) 
-			augerID[$i]=$ID
-			echo "${augerID[@]}" >> $auger
-		    fi	
-		done   
-		echo "${rnum[$i]} has an AugerID of ${augerID[$i]}" 
 		if [ $i == $numlines ]; then
 		    echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 		    echo " "

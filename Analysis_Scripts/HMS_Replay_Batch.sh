@@ -12,19 +12,21 @@ fi
 
 # Set path depending upon hostname. Change or add more as needed  
 if [[ "${HOSTNAME}" = *"farm"* ]]; then  
-    REPLAYPATH="/group/c-kaonlt/USERS/${USER}/hallc_replay_lt"
+    REPLAYPATH="/group/c-pionlt/USERS/${USER}/hallc_replay_lt"
     if [[ "${HOSTNAME}" != *"ifarm"* ]]; then
 	source /site/12gev_phys/softenv.sh 2.3
+	source /apps/root/6.18.04/setroot_CUE.bash
     fi
-    cd "/group/c-kaonlt/hcana/"
-    source "/group/c-kaonlt/hcana/setup.sh"
+    cd "/group/c-pionlt/hcana/"
+    source "/group/c-pionlt/hcana/setup.sh"
     cd "$REPLAYPATH"
     source "$REPLAYPATH/setup.sh"
 elif [[ "${HOSTNAME}" = *"qcd"* ]]; then
-    REPLAYPATH="/group/c-kaonlt/USERS/${USER}/hallc_replay_lt"
+    REPLAYPATH="/group/c-pionlt/USERS/${USER}/hallc_replay_lt"
     source /site/12gev_phys/softenv.sh 2.3
-    cd "/group/c-kaonlt/hcana/"
-    source "/group/c-kaonlt/hcana/setup.sh" 
+    source /apps/root/6.18.04/setroot_CUE.bash
+    cd "/group/c-pionlt/hcana/"
+    source "/group/c-pionlt/hcana/setup.sh" 
     cd "$REPLAYPATH"
     source "$REPLAYPATH/setup.sh" 
 elif [[ "${HOSTNAME}" = *"cdaq"* ]]; then
@@ -35,4 +37,4 @@ fi
 cd $REPLAYPATH
 
 echo -e "\n\nStarting Replay Script\n\n"
-eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/HMS/PRODUCTION/replay_production_hms_coin_all_DC_Calib.C($RUNNUMBER,$MAXEVENTS)\""                                                            
+eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/HMS/PRODUCTION/replay_production_hms_coin_all.C($RUNNUMBER,$MAXEVENTS)\""           

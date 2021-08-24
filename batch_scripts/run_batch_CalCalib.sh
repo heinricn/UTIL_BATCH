@@ -7,21 +7,24 @@ if [[ ! $1 =~ ^("HMS"|"SHMS")$ ]]; then
     echo "Please specify spectrometer, HMS or SHMS"
     exit 2
 fi
+RunList=$2
+if [[ -z "$2" ]]; then
+    echo "I need a run list process!"
+    echo "Please provide a run list as input"
+    exit 2
+fi
 ### Check if a second argument was provided, if not assume -1, if yes, this is max events
-if [[ $2 -eq "" ]]; then
+if [[ $3 -eq "" ]]; then
     MAXEVENTS=-1
 else
-    MAXEVENTS=$2
+    MAXEVENTS=$3
 fi
 ##Output history file##                                                                                            
 historyfile=hist.$( date "+%Y-%m-%d_%H-%M-%S" ).log
 ##Output batch script##                                           
 batch="${USER}_Job.txt"
 ##Input run numbers##                                                                      
-##Point this to the location of your input run list                                            
-#inputFile="/group/c-kaonlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/InputRunLists/Calib_Runs_Reruns"
-#inputFile="/group/c-kaonlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/InputRunLists/inputRuns"
-inputFile="/group/c-kaonlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/InputRunLists/TestRuns"
+inputFile="/group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/InputRunLists/${RunList}"
 ## Tape stub, you can point directly to a taped file and the farm job will do the jgetting for you, don't call it in your script!                   
 MSSstub='/mss/hallc/spring17/raw/coin_all_%05d.dat'
 auger="augerID.tmp"
@@ -66,27 +69,12 @@ while true; do
                 fi
                 echo "CPU: 1" >> ${batch} ### hcana is single core, setting CPU higher will lower priority and gain you nothing!
 		echo "INPUT_FILES: ${tape_file}" >> ${batch}
-                echo "COMMAND:/group/c-kaonlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/Analysis_Scripts/CalCalib_Batch.sh ${runNum} ${SPEC} ${MAXEVENTS}" >> ${batch}
+                echo "COMMAND:/group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/Analysis_Scripts/CalCalib_Batch.sh ${runNum} ${SPEC} ${MAXEVENTS}" >> ${batch}
                 echo "MAIL: ${USER}@jlab.org" >> ${batch}
                 echo "Submitting batch"
                 eval "jsub ${batch} 2>/dev/null"
                 echo " "
                 i=$(( $i + 1 ))
-                string=$(cat ${inputFile} |tr "\n" " ")
-                ##Converts input file to an array##
-                rnum=($string)                                  
-                eval "jobstat -u ${USER} 2>/dev/null" > ${tmp}
-                ##Loop to find ID number of each run number##   
-		for j in "${rnum[@]}"
-		do
-		    if [ $(grep -c $j ${tmp}) -gt 0 ]; then
-			ID=$(echo $(grep $j ${tmp}) | head -c 8)
-			#ID=$(echo $(grep $j ${tmp}) | head -c 8) 
-			augerID[$i]=$ID
-			echo "${augerID[@]}" >> $auger
-		    fi	
-		done   
-		echo "${rnum[$i]} has an AugerID of ${augerID[$i]}" 
 		if [ $i == $numlines ]; then
 		    echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 		    echo " "

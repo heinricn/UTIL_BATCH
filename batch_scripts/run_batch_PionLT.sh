@@ -1,9 +1,9 @@
 #! /bin/bash    
 
 ### Stephen Kay, University of Regina
-### 15/01/21
+### 03/03/21
 ### stephen.kay@uregina.ca
-### A batch submission script based on an earlier version by Richard
+### A batch submission script based on an earlier version by Richard Trotta, Catholic University of America
 
 echo "Running as ${USER}"
 RunList=$1
@@ -20,10 +20,8 @@ fi
 
 ##Output history file
 historyfile=hist.$( date "+%Y-%m-%d_%H-%M-%S" ).log
-##Output batch script                                                                        
-batch="${USER}_Job.txt"
 ##Input run numbers
-inputFile="/group/c-kaonlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/InputRunLists/${RunList}"
+inputFile="/group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/InputRunLists/${RunList}"
 ## Tape stub, you can point directly to a taped file and the farm job will do the jgetting for you, don't call it in your script!                                                      
 MSSstub='/mss/hallc/spring17/raw/coin_all_%05d.dat'
 auger="augerID.tmp"
@@ -41,6 +39,8 @@ while true; do
                 echo ""
                 ##Run number#
                 runNum=$line
+		##Output batch job file                                                                        
+		batch="${USER}_${runNum}_PionLT_Job.txt"
                 tape_file=`printf $MSSstub $runNum`
 		# Print the size of the raw .dat file (converted to GB) to screen. sed command reads line 3 of the tape stub without the leading size=
 	        TapeFileSize=$(($(sed -n '4 s/^[^=]*= *//p' < $tape_file)/1000000000))
@@ -63,18 +63,20 @@ while true; do
 		# Note, unless this is set typically replays will produce broken root files
 		echo "DISK_SPACE: "$(( $TapeFileSize * 2 ))" GB" >> ${batch}
 		if [[ $TapeFileSize -le 45 ]]; then # Assign memory based on size of tape file, should keep this as low as possible!
-                    echo "MEMORY: 2500 MB" >> ${batch}
+                    echo "MEMORY: 3000 MB" >> ${batch}
                 elif [[ $TapeFileSize -ge 45 ]]; then
                     echo "MEMORY: 4000 MB" >> ${batch}
                 fi
 		#echo "OS: general" >> ${batch} # As of 16/1/20 centos 7.2 (which centos7 defaults to) cores being phased out. General will run on first available node (which should speed it up)
 		echo "CPU: 1" >> ${batch} ### hcana is single core, setting CPU higher will lower priority and gain you nothing!
 		echo "INPUT_FILES: ${tape_file}" >> ${batch}
-                echo "COMMAND:/group/c-kaonlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/Analysis_Scripts/NewPionLT.sh ${runNum} ${MAXEVENTS}"  >> ${batch} ### Insert your script at end!
+                echo "COMMAND:/group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/Analysis_Scripts/PionLT.sh ${runNum} ${MAXEVENTS}"  >> ${batch}
                 echo "MAIL: ${USER}@jlab.org" >> ${batch}
                 echo "Submitting batch"
                 eval "jsub ${batch} 2>/dev/null"
                 echo " "
+		sleep 2
+		rm ${batch}
                 i=$(( $i + 1 ))
 		if [ $i == $numlines ]; then
 		    echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"

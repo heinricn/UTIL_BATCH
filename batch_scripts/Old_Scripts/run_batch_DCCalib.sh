@@ -26,7 +26,7 @@ historyfile=hist.$( date "+%Y-%m-%d_%H-%M-%S" ).log
 batch="${USER}_Job.txt"
 
 ##Input run numbers##
-inputFile="/group/c-kaonlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/InputRunLists/Carbon_ALL"
+inputFile="/group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/InputRunLists/Carbon_ALL"
 
 ## Tape stub
 MSSstub='/mss/hallc/spring17/raw/coin_all_%05d.dat'
@@ -54,7 +54,7 @@ while true; do
                 echo "Running ${batch} for ${runNum}"
                 cp /dev/null ${batch}
                 ##Creation of batch script for submission##                                                                                                                                                       
-                echo "PROJECT: c-kaonlt" >> ${batch}
+                echo "PROJECT: c-pionlt" >> ${batch}
 		echo "TRACK: analysis" >> ${batch}
 		#echo "TRACK: debug" >> ${batch}
                 echo "JOBNAME: KaonLT_DCCalib_${SPEC}_${runNum}" >> ${batch}
@@ -63,7 +63,7 @@ while true; do
                 echo "OS: centos7" >> ${batch}
                 echo "CPU: 1" >> ${batch} ### hcana single core, setting CPU higher will lower priority
 		echo "INPUT_FILES: ${tape_file}" >> ${batch}
-		echo "COMMAND:/group/c-kaonlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/Analysis_Scripts/DCCalib_Batch.sh ${runNum} ${SPEC} ${MAXEVENTS}" >> ${batch} 
+		echo "COMMAND:/group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/Analysis_Scripts/DCCalib_Batch.sh ${runNum} ${SPEC} ${MAXEVENTS}" >> ${batch} 
                 echo "MAIL: ${USER}@jlab.org" >> ${batch}
                 echo "Submitting batch"
                 eval "jsub ${batch} 2>/dev/null"

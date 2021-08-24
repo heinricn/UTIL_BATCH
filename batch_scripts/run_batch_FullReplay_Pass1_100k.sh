@@ -1,9 +1,11 @@
 #! /bin/bash
 
-##### A batch submission script by Richard
+### Stephen Kay, University of Regina
+### 03/03/21
+### stephen.kay@uregina.ca
+### A batch submission script based on an earlier version by Richard Trotta, Catholic University of America
 
 echo "Running as ${USER}"
-
 RunList=$1
 if [[ -z "$1" ]]; then
     echo "I need a run list process!"
@@ -15,19 +17,14 @@ if [[ $2 -eq "" ]]; then
 else
     MAXEVENTS=$2
 fi
-
 ##Output history file##
 historyfile=hist.$( date "+%Y-%m-%d_%H-%M-%S" ).log
-
 ##Output batch script##
 batch="${USER}_Job.txt"
-
 ##Input run numbers##
-inputFile="/group/c-kaonlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/InputRunLists/${RunList}"
-
+inputFile="/group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/InputRunLists/${RunList}"
 ## Tape stub
 MSSstub='/mss/hallc/spring17/raw/coin_all_%05d.dat'
-
 auger="augerID.tmp"
 
 while true; do
@@ -41,7 +38,7 @@ while true; do
                 echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
                 echo "Run number read from file: $line"
                 echo ""
-                ## Run number ##                                                                                                                                                                             
+                ## Run number ##
                 runNum=$line
                 tape_file=`printf $MSSstub $runNum`
 		TapeFileSize=$(($(sed -n '4 s/^[^=]*= *//p' < $tape_file)/1000000000))
@@ -50,21 +47,21 @@ while true; do
                 fi
 		echo "Raw .dat file is "$TapeFileSize" GB"
 		tmp=tmp
-                ##Finds number of lines of input file##                                                                                                                                                           
+                ##Finds number of lines of input file##
                 numlines=$(eval "wc -l < ${inputFile}")
                 echo "Job $(( $i + 2 ))/$(( $numlines +1 ))"
                 echo "Running ${batch} for ${runNum}"
                 cp /dev/null ${batch}
-                ##Creation of batch script for submission##                                                                                                                                                       
+                ##Creation of batch script for submission##
                 echo "PROJECT: c-kaonlt" >> ${batch}
                 echo "TRACK: analysis" >> ${batch}
                 echo "JOBNAME: KaonLT_${runNum}" >> ${batch}
                 # Request disk space depending upon raw file size
                 echo "DISK_SPACE: "$(( $TapeFileSize ))" GB" >> ${batch}
-		echo "MEMORY: 2500 MB" >> ${batch}
-                echo "CPU: 1" >> ${batch} ### hcana single core, setting CPU higher will lower priority!                                                                                                          
+		echo "MEMORY: 2000 MB" >> ${batch}
+                echo "CPU: 1" >> ${batch} ### hcana single core, setting CPU higher will lower priority!
 		echo "INPUT_FILES: ${tape_file}" >> ${batch}
-		echo "COMMAND:/group/c-kaonlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/Analysis_Scripts/FullReplay_Pass1_100k.sh ${runNum}" >> ${batch}
+		echo "COMMAND:/group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/Analysis_Scripts/FullReplay_Pass1_100k.sh ${runNum}" >> ${batch}
 		echo "MAIL: ${USER}@jlab.org" >> ${batch}
                 echo "Submitting batch"
                 eval "jsub ${batch} 2>/dev/null"

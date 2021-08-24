@@ -1,8 +1,12 @@
 #!/bin/bash
 
+### Stephen Kay --- University of Regina --- 12/11/19 ###
 ### Script for running (via batch or otherwise) the DC calibration, this one script does all of the relevant steps for the calibration process
 ### REQUIRES two arguments, runnumber and spectrometer (HMS or SHMS, the caps are important!)
 ### If you want to run with LESS than all of the events, provide a third argument with # events
+
+### SK 30/03/21 - This works perfectly fine BUT it bases the calibration off the online (uncalibrated) runs, the new version is designed to work off any DC calibration
+### This is just here for completeness, I will remove it when it gets replaced satisfactorily
 
 RUNNUMBER=$1
 OPT=$2
@@ -40,7 +44,8 @@ fi
 if [[ "${HOSTNAME}" = *"farm"* ]]; then  
     REPLAYPATH="/group/c-pionlt/USERS/${USER}/hallc_replay_lt"
     if [[ "${HOSTNAME}" != *"ifarm"* ]]; then
-	source /site/12gev_phys/softenv.sh 2.1
+	source /site/12gev_phys/softenv.sh 2.3
+	source /apps/root/6.18.04/setroot_CUE.bash
     fi
     cd "/group/c-pionlt/hcana/"
     source "/group/c-pionlt/hcana/setup.sh"
@@ -48,7 +53,8 @@ if [[ "${HOSTNAME}" = *"farm"* ]]; then
     source "$REPLAYPATH/setup.sh"
 elif [[ "${HOSTNAME}" = *"qcd"* ]]; then
     REPLAYPATH="/group/c-pionlt/USERS/${USER}/hallc_replay_lt"
-    source /site/12gev_phys/softenv.sh 2.1
+    source /site/12gev_phys/softenv.sh 2.3
+    source /apps/root/6.18.04/setroot_CUE.bash
     cd "/group/c-pionlt/hcana/"
     source "/group/c-pionlt/hcana/setup.sh" 
     cd "$REPLAYPATH"
@@ -78,8 +84,8 @@ if [ ! -d "$REPLAYPATH/PARAM/SHMS/DC/CALIB" ]; then
 fi
 
 ### Run the first replay script, then, run the calibration macro
-eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/"$OPT"/PRODUCTION/"$OPT"DC_Calib_Coin_Pt1.C($RUNNUMBER,$MAXEVENTS)\""
-ROOTFILE="$REPLAYPATH/ROOTfilesDCCalib/"$OPT"_DC_Calib_Pt1_"$RUNNUMBER"_"$MAXEVENTS".root" 
+eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/COIN/CALIBRATION/"$OPT"DC_Calib_Coin_Pt1_Uncalib.C($RUNNUMBER,$MAXEVENTS)\""
+ROOTFILE="$REPLAYPATH/ROOTfiles/Calib/DC/"$OPT"_DC_Calib_Pt1_"$RUNNUMBER"_"$MAXEVENTS".root" 
 cd "$REPLAYPATH/CALIBRATION/dc_calib/scripts"
 root -l -b -q "$REPLAYPATH/CALIBRATION/dc_calib/scripts/main_calib.C(\"$OPT\", \"$ROOTFILE\", $RUNNUMBER)"
 
@@ -99,9 +105,9 @@ cd "$REPLAYPATH/DBASE/COIN"
 ### Copy these files to a new directory and rename them
 ### Replace info in lines 3, 37 and 38 with the path to our new files via sed commands
 if [ "$RUNNUMBER" -le "5334" ]; then
-    cp "$REPLAYPATH/DBASE/COIN/standard.database" "$REPLAYPATH/DBASE/COIN/"$OPT"_DCCalib/standard_$RUNNUMBER.database"
-    cp "$REPLAYPATH/DBASE/COIN/OnlineAutumn18.param" "$REPLAYPATH/DBASE/COIN/"$OPT"_DCCalib/general_$RUNNUMBER.param"
-    sed -i "s/OnlineAutumn18.param/"$OPT"_DCCalib\/general_$RUNNUMBER.param/" $REPLAYPATH"/DBASE/COIN/"$OPT"_DCCalib/standard_"$RUNNUMBER".database"
+    cp "$REPLAYPATH/DBASE/COIN/standard_Offline.database" "$REPLAYPATH/DBASE/COIN/"$OPT"_DCCalib/standard_$RUNNUMBER.database"
+    cp "$REPLAYPATH/DBASE/COIN/OfflineAutumn18.param" "$REPLAYPATH/DBASE/COIN/"$OPT"_DCCalib/general_$RUNNUMBER.param"
+    sed -i "s/OfflineAutumn18.param/"$OPT"_DCCalib\/general_$RUNNUMBER.param/" $REPLAYPATH"/DBASE/COIN/"$OPT"_DCCalib/standard_"$RUNNUMBER".database"
     if [[ $OPT == "HMS" ]];then
 	sed -i "s/hdc_calib_Autumn18.param/CALIB\/hdc_calib_$RUNNUMBER.param/" $REPLAYPATH"/DBASE/COIN/"$OPT"_DCCalib/general_"$RUNNUMBER".param"
 	sed -i "s/hdc_tzero_per_wire_Autumn18.param/CALIB\/hdc_tzero_per_wire_$RUNNUMBER.param/" $REPLAYPATH"/DBASE/COIN/"$OPT"_DCCalib/general_"$RUNNUMBER".param"
@@ -115,9 +121,9 @@ fi
 ### Copy these files to a new directory and rename them
 ### Replace info in lines 8, 37 and 38 with the path to our new files via sed commands
 if [ "$RUNNUMBER" -ge "5335" -a "$RUNNUMBER" -le "7045" ]; then 
-    cp "$REPLAYPATH/DBASE/COIN/standard.database" "$REPLAYPATH/DBASE/COIN/"$OPT"_DCCalib/standard_$RUNNUMBER.database"
-    cp "$REPLAYPATH/DBASE/COIN/OnlineWinter18.param" "$REPLAYPATH/DBASE/COIN/"$OPT"_DCCalib/general_$RUNNUMBER.param"
-    sed -i "s/OnlineWinter18.param/"$OPT"_DCCalib\/general_$RUNNUMBER.param/" $REPLAYPATH"/DBASE/COIN/"$OPT"_DCCalib/standard_"$RUNNUMBER".database"
+    cp "$REPLAYPATH/DBASE/COIN/standard_Offline.database" "$REPLAYPATH/DBASE/COIN/"$OPT"_DCCalib/standard_$RUNNUMBER.database"
+    cp "$REPLAYPATH/DBASE/COIN/OfflineWinter18.param" "$REPLAYPATH/DBASE/COIN/"$OPT"_DCCalib/general_$RUNNUMBER.param"
+    sed -i "s/OfflineWinter18.param/"$OPT"_DCCalib\/general_$RUNNUMBER.param/" $REPLAYPATH"/DBASE/COIN/"$OPT"_DCCalib/standard_"$RUNNUMBER".database"
     if [[ $OPT == "HMS" ]];then
 	sed -i "s/hdc_calib_Winter18.param/CALIB\/hdc_calib_$RUNNUMBER.param/" $REPLAYPATH"/DBASE/COIN/"$OPT"_DCCalib/general_"$RUNNUMBER".param"
 	sed -i "s/hdc_tzero_per_wire_Winter18.param/CALIB\/hdc_tzero_per_wire_$RUNNUMBER.param/" $REPLAYPATH"/DBASE/COIN/"$OPT"_DCCalib/general_"$RUNNUMBER".param"
@@ -131,9 +137,9 @@ fi
 ### Copy these files to a new directory and rename them
 ### Replace info in lines 13, 37 and 38 with the path to our new files via sed commands
 if [ "$RUNNUMBER" -ge "7046" -a "$RUNNUMBER" -le "8375" ]; then 
-    cp "$REPLAYPATH/DBASE/COIN/standard.database" "$REPLAYPATH/DBASE/COIN/"$OPT"_DCCalib/standard_$RUNNUMBER.database"
-    cp "$REPLAYPATH/DBASE/COIN/OnlineSpring19.param" "$REPLAYPATH/DBASE/COIN/"$OPT"_DCCalib/general_$RUNNUMBER.param"
-    sed -i "s/OnlineSpring19.param/"$OPT"_DCCalib\/general_$RUNNUMBER.param/" $REPLAYPATH"/DBASE/COIN/"$OPT"_DCCalib/standard_"$RUNNUMBER".database"
+    cp "$REPLAYPATH/DBASE/COIN/standard_Offline.database" "$REPLAYPATH/DBASE/COIN/"$OPT"_DCCalib/standard_$RUNNUMBER.database"
+    cp "$REPLAYPATH/DBASE/COIN/OfflineSpring19.param" "$REPLAYPATH/DBASE/COIN/"$OPT"_DCCalib/general_$RUNNUMBER.param"
+    sed -i "s/OfflineSpring19.param/"$OPT"_DCCalib\/general_$RUNNUMBER.param/" $REPLAYPATH"/DBASE/COIN/"$OPT"_DCCalib/standard_"$RUNNUMBER".database"
     if [[ $OPT == "HMS" ]];then
 	sed -i "s/hdc_calib_Spring19.param/CALIB\/hdc_calib_$RUNNUMBER.param/" $REPLAYPATH"/DBASE/COIN/"$OPT"_DCCalib/general_"$RUNNUMBER".param"
 	sed -i "s/hdc_tzero_per_wire_Spring19.param/CALIB\/hdc_tzero_per_wire_$RUNNUMBER.param/" $REPLAYPATH"/DBASE/COIN/"$OPT"_DCCalib/general_"$RUNNUMBER".param"
@@ -148,9 +154,9 @@ fi
 ### Copy these files to a new directory and rename them
 ### Replace info in lines 13, 37 and 38 with the path to our new files via sed commands
 if [ "$RUNNUMBER" -ge "8376" ]; then 
-    cp "$REPLAYPATH/DBASE/COIN/standard.database" "$REPLAYPATH/DBASE/COIN/"$OPT"_DCCalib/standard_$RUNNUMBER.database"
-    cp "$REPLAYPATH/DBASE/COIN/OnlineSummer19.param" "$REPLAYPATH/DBASE/COIN/"$OPT"_DCCalib/general_$RUNNUMBER.param"
-    sed -i "s/OnlineSummer.param/"$OPT"_DCCalib\/general_$RUNNUMBER.param/" $REPLAYPATH"/DBASE/COIN/"$OPT"_DCCalib/standard_"$RUNNUMBER".database"
+    cp "$REPLAYPATH/DBASE/COIN/standard_Offline.database" "$REPLAYPATH/DBASE/COIN/"$OPT"_DCCalib/standard_$RUNNUMBER.database"
+    cp "$REPLAYPATH/DBASE/COIN/OfflineSummer19.param" "$REPLAYPATH/DBASE/COIN/"$OPT"_DCCalib/general_$RUNNUMBER.param"
+    sed -i "s/OfflineSummer19.param/"$OPT"_DCCalib\/general_$RUNNUMBER.param/" $REPLAYPATH"/DBASE/COIN/"$OPT"_DCCalib/standard_"$RUNNUMBER".database"
     if [[ $OPT == "HMS" ]];then
 	sed -i "s/hdc_calib_Spring19.param/CALIB\/hdc_calib_$RUNNUMBER.param/" $REPLAYPATH"/DBASE/COIN/"$OPT"_DCCalib/general_"$RUNNUMBER".param"
 	sed -i "s/hdc_tzero_per_wire_Spring19.param/CALIB\/hdc_tzero_per_wire_$RUNNUMBER.param/" $REPLAYPATH"/DBASE/COIN/"$OPT"_DCCalib/general_"$RUNNUMBER".param"
@@ -163,8 +169,13 @@ fi
 
 ### Finally, replay again with our new parameter files
 cd $REPLAYPATH
-eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/"$OPT"/PRODUCTION/"$OPT"DC_Calib_Coin_Pt2.C($RUNNUMBER,$MAXEVENTS)\""
+eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/COIN/CALIBRATION/"$OPT"DC_Calib_Coin_Pt2_Uncalib.C($RUNNUMBER,$MAXEVENTS)\""
 cd "$REPLAYPATH/CALIBRATION/dc_calib/Calibration_Checker/"
-root -l -b -q "$REPLAYPATH/CALIBRATION/dc_calib/Calibration_Checker/run_DC_Calib_Check.C ($RUNNUMBER, $MAXEVENTS, \"$OPT\")"
+root -b << EOF
+.x run_DC_Calib_Check.C(${RUNNUMBER}, ${MAXEVENTS}, "${OPT}")
+.q
+EOF
+### SK 30/03/21 - Last step seems to be broken, use an EOF command instead
+#root -l -b -q "$REPLAYPATH/CALIBRATION/dc_calib/Calibration_Checker/run_DC_Calib_Check.C ($RUNNUMBER, $MAXEVENTS, \"$OPT\")"
 
 exit 0
