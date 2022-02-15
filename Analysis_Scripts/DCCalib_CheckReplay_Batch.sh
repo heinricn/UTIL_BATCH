@@ -33,7 +33,7 @@ fi
 if [[ "${HOSTNAME}" = *"farm"* ]]; then  
     REPLAYPATH="/group/c-pionlt/online_analysis/hallc_replay_lt"
     if [[ "${HOSTNAME}" != *"ifarm"* ]]; then
-	source /site/12gev_phys/softenv.sh 2.3
+	source /site/12gev_phys/softenv.sh 2.4
 	source /apps/root/6.18.04/setroot_CUE.bash
     fi
     cd "/group/c-pionlt/hcana/"
@@ -42,7 +42,7 @@ if [[ "${HOSTNAME}" = *"farm"* ]]; then
     source "$REPLAYPATH/setup.sh"
 elif [[ "${HOSTNAME}" = *"qcd"* ]]; then
     REPLAYPATH="/group/c-pionlt/USERS/${USER}/hallc_replay_lt"
-    source /site/12gev_phys/softenv.sh 2.3
+    source /site/12gev_phys/softenv.sh 2.4
     source /apps/root/6.18.04/setroot_CUE.bash
     cd "/group/c-pionlt/hcana/"
     source "/group/c-pionlt/hcana/setup.sh" 

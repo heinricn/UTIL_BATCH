@@ -24,7 +24,7 @@ fi
 ##Output history file##
 historyfile=hist.$( date "+%Y-%m-%d_%H-%M-%S" ).log
 ##Input run numbers##
-inputFile="/group/c-pionlt/online_analysis/hallc_replay_lt/UTIL_BATCH/InputRunLists/${RunList}"
+inputFile="/group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/InputRunLists/${RunList}"
 
 while true; do
     read -p "Do you wish to begin a new batch submission? (Please answer yes or no) " yn
@@ -53,7 +53,7 @@ while true; do
                 echo "Running ${batch} for ${runNum}"
                 cp /dev/null ${batch}
                 ##Creation of batch script for submission##
-                echo "PROJECT: c-pionlt" >> ${batch}
+                echo "PROJECT: c-kaonlt" >> ${batch}
 		echo "TRACK: analysis" >> ${batch}
 		#echo "TRACK: debug" >> ${batch}
                 echo "JOBNAME: KaonLT_DCCalib_${SPEC}_${runNum}" >> ${batch}
@@ -61,7 +61,7 @@ while true; do
                 echo "MEMORY: 3000 MB" >> ${batch}
                 echo "CPU: 1" >> ${batch} ### hcana single core, setting CPU higher will lower priority
 		echo "INPUT_FILES: ${tape_file}" >> ${batch}
-		echo "COMMAND:/group/c-pionlt/online_analysis/hallc_replay_lt/UTIL_BATCH/Analysis_Scripts/DCCalib_CheckReplay_Batch.sh ${runNum} ${SPEC} ${MAXEVENTS}" >> ${batch} 
+		echo "COMMAND:/group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/Analysis_Scripts/DCCalib_CheckReplay_Batch.sh ${runNum} ${SPEC} ${MAXEVENTS}" >> ${batch} 
                 echo "MAIL: ${USER}@jlab.org" >> ${batch}
                 echo "Submitting batch"
                 eval "swif2 add-jsub LTSep -script ${batch} 2>/dev/null"
@@ -77,6 +77,7 @@ while true; do
 		fi
 	    done < "$inputFile"
 	    )
+	    eval 'swif2 run'
 	    break;;
         [Nn]* ) 
 	    exit;;

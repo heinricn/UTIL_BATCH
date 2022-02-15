@@ -116,7 +116,6 @@ while yes_or_no("Do you wish to begin a new batch submission?"):
     print("############################################ END OF JOB SUBMISSIONS ###########################################")
     print("###############################################################################################################")
     print("\n")
+    subprocess.call(["swif2", "run"])
     break
     sys.exit(3)
-
-

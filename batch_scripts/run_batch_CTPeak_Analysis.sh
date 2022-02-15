@@ -22,7 +22,7 @@ historyfile=hist.$( date "+%Y-%m-%d_%H-%M-%S" ).log
 
 ##Input run numbers##                                                                      
 ##Point this to the location of your input run list                                           
-inputFile="/group/c-pionlt/online_analysis/hallc_replay_lt/UTIL_BATCH/InputRunLists/${RunList}"
+inputFile="/group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/InputRunLists/${RunList}"
 
 while true; do
     read -p "Do you wish to begin a new batch submission? (Please answer yes or no) " yn
@@ -57,7 +57,7 @@ while true; do
                 echo "Running ${batch}"
                 cp /dev/null ${batch}
                 ##Creation of batch script for submission##                                      
-                echo "PROJECT: c-pionlt" >> ${batch} # Or whatever your project is!
+                echo "PROJECT: c-kaonlt" >> ${batch} # Or whatever your project is!
 		echo "TRACK: analysis" >> ${batch} ## Use this track for production running
 		#echo "TRACK: debug" >> ${batch} ### Use this track for testing, higher priority
                 echo "JOBNAME: CTPeak_${runNum}" >> ${batch} ## Change to be more specific if you want
@@ -73,7 +73,7 @@ while true; do
                 fi
 		echo "CPU: 1" >> ${batch} ### hcana is single core, setting CPU higher will lower priority and gain you nothing!
 		echo "INPUT_FILES: ${tape_file}" >> ${batch}
-                echo "COMMAND:/group/c-pionlt/online_analysis/hallc_replay_lt/UTIL_BATCH/Analysis_Scripts/CTPeak_Analysis.sh ${runNum} ${MAXEVENTS}"  >> ${batch} ### Insert your script at end!
+                echo "COMMAND:/group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/Analysis_Scripts/CTPeak_Analysis.sh ${runNum} ${MAXEVENTS}"  >> ${batch} ### Insert your script at end!
                 echo "MAIL: ${USER}@jlab.org" >> ${batch}
                 echo "Submitting batch"
                 eval "swif2 add-jsub LTSep -script ${batch} 2>/dev/null"
@@ -91,6 +91,7 @@ while true; do
 		fi
 		done < "$inputFile"
 	     )
+	    eval 'swif2 run'
 	    break;;
         [Nn]* ) 
 	        exit;;

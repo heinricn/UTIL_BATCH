@@ -44,14 +44,14 @@ if [[ $3 -eq "" ]]; then
     MAXEVENTS=-1 
 fi
 
-UTILPATH="/group/c-pionlt/online_analysis/hallc_replay_lt/UTIL_BATCH"
+UTILPATH="/group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH"
 ANASCRIPT="'${UTILPATH}/Analysis_Scripts/run_PionLT.sh' ${RUNTYPE}"
 
 ##Output history file##
 historyfile=hist.$( date "+%Y-%m-%d_%H-%M-%S" ).log
 ##Input run numbers##
 #inputFile="${UTILPATH}/InputRunLists/Pion_Data/${RUNTYPE}_ALL_fall21"
-inputFile="/group/c-pionlt/online_analysis/hallc_replay_lt/UTIL_BATCH/InputRunLists/${RunList}"
+inputFile="/group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/InputRunLists/${RunList}"
 
 while true; do
     read -p "Do you wish to begin a new batch submission? (Please answer yes or no) " yn
@@ -119,6 +119,7 @@ while true; do
 		fi
 	    done < "$inputFile"
 	    )
+	    eval 'swif2 run'
 	    break;;
         [Nn]* ) 
 	    exit;;
