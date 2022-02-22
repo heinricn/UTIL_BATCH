@@ -1,9 +1,10 @@
-#! /bin/bash                                                                                                                                                                                                      
+#! /bin/bash
+                                                                                            
 ### Stephen Kay, University of Regina
 ### 03/03/21
 ### stephen.kay@uregina.ca
-### A batch submission script based on an earlier version by Richard Trotta, Catholic University of America                       
-##### Modify required resources as needed!                                                                                                                                   
+### A batch submission script based on an earlier version by Richard Trotta, Catholic University of America
+##### Modify required resources as needed!
 
 echo "Running as ${USER}"
 SPEC=$1
@@ -25,9 +26,9 @@ else
     MAXEVENTS=$3
 fi
 
-##Output history file##             
-historyfile=hist.$( date "+%Y-%m-%d_%H-%M-%S" ).log
-##Input run numbers##
+# 15/02/22 - SJDK - Added the swif2 workflow as a variable you can specify here
+Workflow="LTSep_${USER}" # Change this as desired
+# Input run numbers, this just points to a file which is a list of run numbers, one number per line
 inputFile="/group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/InputRunLists/${RunList}"
 
 while true; do
@@ -49,7 +50,7 @@ while true; do
 		    MSSstub='/mss/hallc/spring17/raw/coin_all_%05d.dat'
 		fi
 		##Output batch job file##
-		batch="${USER}_${runNum}_HodoCalib_Job.txt"
+		batch="${USER}_${runNum}_${SPEC}_HodoCalib_Job.txt"
                 tape_file=`printf $MSSstub $runNum`
                 tmp=tmp
                 ##Finds number of lines of input file##
@@ -70,7 +71,7 @@ while true; do
 		echo "COMMAND:/group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/Analysis_Scripts/HodoCalib_Batch.sh ${runNum} ${SPEC} ${MAXEVENTS}" >> ${batch} 
                 echo "MAIL: ${USER}@jlab.org" >> ${batch}
                 echo "Submitting batch"
-                eval "swif2 add-jsub LTSep -script ${batch} 2>/dev/null"
+                eval "swif2 add-jsub ${Workflow} -script ${batch} 2>/dev/null"
                 echo " "
                 i=$(( $i + 1 ))
 		if [ $i == $numlines ]; then
@@ -83,7 +84,7 @@ while true; do
 		fi
 	    done < "$inputFile"
 	    )
-	    eval 'swif2 run'
+	    eval 'swif2 run ${Workflow}'
 	    break;;
         [Nn]* ) 
 	    exit;;

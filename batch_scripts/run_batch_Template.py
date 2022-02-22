@@ -58,6 +58,9 @@ inputFilePath = BATCHPATH+"/InputRunLists/"+RunList
 
 print("Running as %s on %s, hallc_replay_lt path assumed as %s" % (USER, HOST, REPLAYPATH))
 
+# 15/02/22 - SJDK - Added the swif2 workflow as a variable you can specify here
+Workflow = "LTSep_"+USER # Change this as desired, could be changed to an input argument if you really want
+
 ################################################################################################################################################
 
 if os.path.isfile(inputFilePath) == False :
@@ -103,12 +106,11 @@ while yes_or_no("Do you wish to begin a new batch submission?"):
             batchfile.write("MEMORY: 4000 MB\n")
         batchfile.write("CPU: 1\n") # hcana is single core, requesting more CPU's will lower priority but won't speed up your job
         batchfile.write("INPUT_FILES: "+MSSstub+"\n")
-        batchfile.write("COMMAND:"+BATCHPATH+"/Analysis_Scripts/PionLT.sh "+str(runNum)+" "+MAXEVENTS+"\n") # Testing using the PionLT script
+        batchfile.write("COMMAND:"+BATCHPATH+"/Analysis_Scripts/PionLT.sh "+str(runNum)+" "+str(MAXEVENTS)+"\n") # Testing using the PionLT script
         #batchfile.write("COMMAND:"+BATCHPATH+"/Analysis_Scripts/Batch_Template.sh "+str(runNum)+" "+MAXEVENTS+"\n") # Insert your script and relevant arguments at the end
         batchfile.close()
         print("Submitting job "+str(LineNum)+"/"+str(MaxLine)+" - "+JobName)
-        subprocess.call(["swif2", "add-jsub", "LTSep", "-script", batch])
-        print("\n")
+        subprocess.call(["swif2", "add-jsub", Workflow, "-script", batch])
         time.sleep(2)
         if os.path.exists(batch):
             os.remove(batch)
@@ -116,6 +118,6 @@ while yes_or_no("Do you wish to begin a new batch submission?"):
     print("############################################ END OF JOB SUBMISSIONS ###########################################")
     print("###############################################################################################################")
     print("\n")
-    subprocess.call(["swif2", "run"])
+    subprocess.call(["swif2", "run", Workflow])
     break
     sys.exit(3)

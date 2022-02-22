@@ -13,9 +13,9 @@ else
     MAXEVENTS=$2
 fi
 
-##Output history file
-historyfile=hist.$( date "+%Y-%m-%d_%H-%M-%S" ).log
-##Input run numbers
+# 15/02/22 - SJDK - Added the swif2 workflow as a variable you can specify here
+Workflow="LTSep_${USER}" # Change this as desired
+# Input run numbers, this just points to a file which is a list of run numbers, one number per line
 inputFile="/group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/InputRunLists/${RunList}"
 
 while true; do
@@ -67,10 +67,10 @@ while true; do
 		#echo "OS: general" >> ${batch} # As of 16/1/20 centos 7.2 (which centos7 defaults to) cores being phased out. General will run on first available node (which should speed it up)
 		echo "CPU: 1" >> ${batch} ### hcana is single core, setting CPU higher will lower priority and gain you nothing!
 		echo "INPUT_FILES: ${tape_file}" >> ${batch}
-                echo "COMMAND:/group/c-pionlt/USERS/$"${USER}/hallc_replay_lt/UTIL_BATCH/Analysis_Scripts/FullReplay_coin_heep.sh ${runNum} ${MAXEVENTS}"  >> ${batch}
+                echo "COMMAND:/group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/Analysis_Scripts/FullReplay_coin_heep.sh ${runNum} ${MAXEVENTS}"  >> ${batch}
                 echo "MAIL: ${USER}@jlab.org" >> ${batch}
                 echo "Submitting batch"
-                eval "jsub ${batch} 2>/dev/null"
+		eval "swif2 add-jsub ${Workflow} -script ${batch} 2>/dev/null" # Swif2 job submission, uses old jsub scripts
                 echo " "
 		sleep 2
 		rm ${batch}
@@ -85,7 +85,7 @@ while true; do
 		fi
 		done < "$inputFile"
 	     )
-	    eval 'swif2 run'
+	    eval 'swif2 run ${Workflow}'
 	    break;;
         [Nn]* ) 
 	        exit;;

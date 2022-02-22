@@ -20,10 +20,10 @@ else
     MAXEVENTS=$2
 fi
 
-# Output history file
-historyfile=hist.$( date "+%Y-%m-%d_%H-%M-%S" ).log
+# 15/02/22 - SJDK - Added the swif2 workflow as a variable you can specify here
+Workflow="LTSep_${USER}" # Change this as desired
 # Input run numbers, this just points to a file which is a list of run numbers, one number per line
-inputFile="/group/c-pionlt/USERS/$"${USER}/hallc_replay_lt/UTIL_BATCH/InputRunLists/${RunList}"
+inputFile="/group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/InputRunLists/${RunList}"
 
 while true; do
     read -p "Do you wish to begin a new batch submission? (Please answer yes or no) " yn
@@ -75,11 +75,11 @@ while true; do
                 fi
 		echo "CPU: 1" >> ${batch} ### hcana is single core, setting CPU higher will lower priority and gain you nothing!
 		echo "INPUT_FILES: ${tape_file}" >> ${batch}
-                echo "COMMAND:/group/c-pionlt/USERS/$"${USER}/hallc_replay_lt/UTIL_BATCH/Analysis_Scripts/Batch_Template.sh ${runNum} ${MAXEVENTS}"  >> ${batch} ### Insert your script at end!
+                echo "COMMAND:/group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/Analysis_Scripts/Batch_Template.sh ${runNum} ${MAXEVENTS}"  >> ${batch} ### Insert your script at end!
                 echo "MAIL: ${USER}@jlab.org" >> ${batch}
                 echo "Submitting batch"
 		# swif2 is now used for job submission, we use our old jsub style scripts. The argument set to "LTSep" currently is the workflow. Change this if you want.
-                eval "swif2 add-jsub LTSep -script ${batch} 2>/dev/null" # Swif2 job submission, uses old jsub scripts
+                eval "swif2 add-jsub ${Workflow} -script ${batch} 2>/dev/null" # Swif2 job submission, uses old jsub scripts
                 echo " "
 		sleep 2
 		# Delete the script we just submitted as a batch job, this stops this folder getting clogged
@@ -94,7 +94,7 @@ while true; do
 		fi
 		done < "$inputFile"
 	     )
-	    eval 'swif2 run'
+	    eval 'swif2 run ${Workflow}'
 	    break;;
         [Nn]* ) 
 	        exit;;

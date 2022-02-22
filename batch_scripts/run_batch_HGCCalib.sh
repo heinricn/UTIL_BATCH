@@ -18,14 +18,10 @@ else
     MAXEVENTS=$2
 fi
 
-##Output history file##
-historyfile=hist.$( date "+%Y-%m-%d_%H-%M-%S" ).log
-##Output batch script##
-batch="${USER}_Job.txt"
-##Input run numbers##
-inputFile="/group/c-pionltUSERS/${USER}/hallc_replay_lt/UTIL_BATCH/InputRunLists/${RunList}"
-## Tape stub
-MSSstub='/mss/hallc/c-pionlt/raw/shms_all_%05d.dat'
+# 15/02/22 - SJDK - Added the swif2 workflow as a variable you can specify here
+Workflow="LTSep_${USER}" # Change this as desired
+# Input run numbers, this just points to a file which is a list of run numbers, one number per line
+inputFile="/group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/InputRunLists/${RunList}"
 
 echo "Note, this script only processes calibration for a single run at a time, you may need to manually run the HGC script with a set of run numbers for better results"
 echo "See hallc_replay_lt/CALIBRATION/shms_hgcer_calib/README.md for instructions on how to chain runs together with the calibration script"
@@ -43,6 +39,13 @@ while true; do
                 echo ""
                 ## Run number ##
                 runNum=$line
+		# Tape stub, you can point directly to a taped file and the farm job will do the jgetting for you, don't call it in your script! The stub is chosen based upon run number. This is very rough, bit generally correct
+		if [[ $runNum -ge 10000 ]]; then
+		    MSSstub='/mss/hallc/c-pionlt/raw/shms_all_%05d.dat'
+		elif [[ $runNum -lt 10000 ]]; then
+		    MSSstub='/mss/hallc/spring17/raw/coin_all_%05d.dat'
+		fi
+		batch="${USER}_${runNum}_HGCCalib_Job.txt"
                 tape_file=`printf $MSSstub $runNum`
 		TapeFileSize=$(($(sed -n '4 s/^[^=]*= *//p' < $tape_file)/1000000000))
 		if [[ $TapeFileSize == 0 ]];then
@@ -73,7 +76,7 @@ while true; do
 		echo "COMMAND:/group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/Analysis_Scripts/HGCCalib_Batch.sh ${runNum}" >> ${batch}
 		echo "MAIL: ${USER}@jlab.org" >> ${batch}
                 echo "Submitting batch"
-                eval "swif2 add-jsub LTSep -script ${batch} 2>/dev/null"
+                eval "swif2 add-jsub ${Workflow} -script ${batch} 2>/dev/null"
                 echo " "
                 i=$(( $i + 1 ))
 		if [ $i == $numlines ]; then
@@ -86,7 +89,7 @@ while true; do
 		fi
 	    done < "$inputFile"
 	    )
-	    eval 'swif2 run'
+	    eval 'swif2 run ${Workflow}'
 	    break;;
         [Nn]* ) 
 	    exit;;

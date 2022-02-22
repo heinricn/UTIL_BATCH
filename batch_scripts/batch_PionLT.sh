@@ -47,10 +47,9 @@ fi
 UTILPATH="/group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH"
 ANASCRIPT="'${UTILPATH}/Analysis_Scripts/run_PionLT.sh' ${RUNTYPE}"
 
-##Output history file##
-historyfile=hist.$( date "+%Y-%m-%d_%H-%M-%S" ).log
-##Input run numbers##
-#inputFile="${UTILPATH}/InputRunLists/Pion_Data/${RUNTYPE}_ALL_fall21"
+# 15/02/22 - SJDK - Added the swif2 workflow as a variable you can specify here
+Workflow="LTSep_${USER}" # Change this as desired
+# Input run numbers, this just points to a file which is a list of run numbers, one number per line
 inputFile="/group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/InputRunLists/${RunList}"
 
 while true; do
@@ -104,7 +103,7 @@ while true; do
 		#echo "TIME: 1" >> ${batch} 
 		echo "COMMAND:${ANASCRIPT} ${runNum} ${MAXEVENTS}" >> ${batch}
                 echo "Submitting batch"
- 		eval "swif2 add-jsub LTSep -script ${batch} 2>/dev/null" # Swif2 job submission, uses old jsub scripts
+ 		eval "swif2 add-jsub ${Workflow} -script ${batch} 2>/dev/null" # Swif2 job submission, uses old jsub scripts
                 echo " "
 		sleep 2
 		rm ${batch}
@@ -119,7 +118,7 @@ while true; do
 		fi
 	    done < "$inputFile"
 	    )
-	    eval 'swif2 run'
+	    eval 'swif2 run ${Workflow}'
 	    break;;
         [Nn]* ) 
 	    exit;;
