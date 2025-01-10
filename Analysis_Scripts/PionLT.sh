@@ -115,3 +115,4 @@ elif [[ $RUNTYPE == "Optics" ]]; then
     echo "Running optics analysis script - "
     eval '"${UTILPATH}/scripts/optics/run_optics.sh" ${RUNNUMBER} ${MAXEVENTS}'
 fi
+#root -l -b -q "getCoinOffset.C(\"$REPLAYPATH/ROOTfiles/Analysis/PionLT/Pion_coin_replay_production_$RUNNUMBER_-1.root\",$RUNNUMBER)"

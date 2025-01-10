@@ -20,10 +20,13 @@ fi
 # Set path depending upon hostname. Change or add more as needed  
 if [[ "${HOSTNAME}" = *"farm"* ]]; then  
     REPLAYPATH="/group/c-pionlt/USERS/${USER}/hallc_replay_lt"
+    module use /cvmfs/oasis.opensciencegrid.org/jlab/scicomp/sw/el9/modulefiles
+    module load root/6.24.08-gcc11.4.0
+    source /u/group/c-pionlt/USERS/heinricn/replay_lt_env/bin/activate.csh
     #REPLAYPATH="/group/c-pionlt/online_analysis/hallc_replay_lt"
     if [[ "${HOSTNAME}" != *"ifarm"* ]]; then
 	#source /site/12gev_phys/softenv.sh 2.4
-	source /apps/root/6.18.04/setroot_CUE.bash
+	module load root/6.24.08-gcc11.4.0
     fi
     cd "$REPLAYPATH"
     source "$REPLAYPATH/setup.sh"

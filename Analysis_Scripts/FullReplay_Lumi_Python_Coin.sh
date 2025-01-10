@@ -1,9 +1,9 @@
-#! /bin/bash
+#!/bin/bash
 
 echo "Starting Replay script"
 echo "I take as arguments the Run Number and max number of events!"
 RUNNUMBER=$1
-MAXEVENTS=$2
+MAXEVENTS=-1
 ### Check you've provided the an argument
 if [[ $1 -eq "" ]]; then
     echo "I need a Run Number!"
@@ -20,20 +20,20 @@ fi
 # Set path depending upon hostname. Change or add more as needed  
 if [[ "${HOSTNAME}" = *"farm"* ]]; then  
     REPLAYPATH="/group/c-pionlt/USERS/${USER}/hallc_replay_lt"
+    module use /cvmfs/oasis.opensciencegrid.org/jlab/scicomp/sw/el9/modulefiles
+    module load root/6.24.08-gcc11.4.0
+    source /u/group/c-pionlt/USERS/heinricn/replay_lt_env/bin/activate.csh
+    #REPLAYPATH="/group/c-pionlt/online_analysis/hallc_replay_lt"
     if [[ "${HOSTNAME}" != *"ifarm"* ]]; then
-	source /site/12gev_phys/softenv.sh 2.4
-	source /apps/root/6.18.04/setroot_CUE.bash
+	#source /site/12gev_phys/softenv.sh 2.4
+	module load root/6.24.08-gcc11.4.0
     fi
-    cd "/group/c-pionlt/hcana/"
-    source "/group/c-pionlt/hcana/setup.sh"
     cd "$REPLAYPATH"
     source "$REPLAYPATH/setup.sh"
 elif [[ "${HOSTNAME}" = *"qcd"* ]]; then
     REPLAYPATH="/group/c-pionlt/USERS/${USER}/hallc_replay_lt"
-    source /site/12gev_phys/softenv.sh 2.4
+    #source /site/12gev_phys/softenv.sh 2.4
     source /apps/root/6.18.04/setroot_CUE.bash
-    cd "/group/c-pionlt/hcana/"
-    source "/group/c-pionlt/hcana/setup.sh" 
     cd "$REPLAYPATH"
     source "$REPLAYPATH/setup.sh" 
 elif [[ "${HOSTNAME}" = *"cdaq"* ]]; then
@@ -41,14 +41,9 @@ elif [[ "${HOSTNAME}" = *"cdaq"* ]]; then
 elif [[ "${HOSTNAME}" = *"phys.uregina.ca"* ]]; then
     REPLAYPATH="/home/${USER}/work/JLab/hallc_replay_lt"
 fi
+UTILPATH="${REPLAYPATH}/UTIL_PION"
 cd $REPLAYPATH
 
-echo -e "\n\nStarting Replay Script\n\n"
-echo "$REPLAYPATH/hcana -l -q \"UTIL_PION/scripts/replay/PionLT/replay_AllRefTimes.C($RUNNUMBER,$MAXEVENTS)\""
-//eval "$REPLAYPATH/hcana -l -q \"UTIL_PION/scripts/replay/PionLT/replay_AllRefTimes.C($RUNNUMBER,$MAXEVENTS)\""
+eval "$UTILPATH/scripts/luminosity/replay_lumi_coin.sh $RUNNUMBER -1" 
 
-cd $REPLAYPATH/CALIBRATION/ref_times
-COMMAND="root -l -q -b 'RefTimes.C(\"$REPLAYPATH/ROOTfiles/Calib/General/Pion_coin_replay_AllRefTimes_${RUNNUMBER}_$MAXEVENTS.root\",${RUNNUMBER})'"
-echo $COMMAND
-eval $COMMAND
 exit 0

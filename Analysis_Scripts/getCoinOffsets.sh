@@ -19,6 +19,6 @@ while IFS='' read -r line || [[ -n "$line" ]]; do
                 RUNNUMBER=$line
                 
                 cd "$REPLAYPATH/CALIBRATION/"
-                root -l -b -q "getCoinOffset.C(\"$REPLAYPATH/ROOTfiles/Analysis/PionLT/Pion_coin_replay_production_$RUNNUMBER_-1.root\",$RUNNUMBER)"
+                root -l -b -q "getCoinOffset.C(\"$REPLAYPATH/ROOTfiles/Analysis/PionLT/Pion_coin_replay_production_${RUNNUMBER}_-1.root\",$RUNNUMBER)"
 
 done < "$RunList"

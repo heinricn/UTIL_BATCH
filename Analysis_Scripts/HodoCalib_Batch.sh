@@ -173,7 +173,7 @@ root -l -q -b "$REPLAYPATH/CALIBRATION/"$spec"_hodo_calib/fitHodoCalib.C(\"$ROOT
 # Check our new file exists, if not exit, if yes, move it
 if [ ! -f "$REPLAYPATH/PARAM/"$OPT"/HODO/"$specL"hodo_Vpcalib_$RUNNUMBER.param" ]; then
     echo ""$specL"hodo_Vpcalib_$RUNNUMBER.param not found, calibration script likely failed"
-#    exit 2
+    exit 2
 fi
 
 mv "$REPLAYPATH/PARAM/"$OPT"/HODO/"$specL"hodo_Vpcalib_$RUNNUMBER.param" "$REPLAYPATH/PARAM/"$OPT"/HODO/Calibration/"$specL"hodo_Vpcalib_$RUNNUMBER.param"
