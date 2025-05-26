@@ -1,29 +1,23 @@
 #! /bin/bash
-                                                                                            
+
 ### Stephen Kay, University of Regina
 ### 03/03/21
 ### stephen.kay@uregina.ca
 ### A batch submission script based on an earlier version by Richard Trotta, Catholic University of America
-##### Modify required resources as needed!
+### Modify required resources as needed!
 
 echo "Running as ${USER}"
-SPEC=$1
-### Check you have provided the first argument correctly
-if [[ ! $1 =~ ^("HMS"|"SHMS")$ ]]; then
-    echo "Please specify spectrometer, HMS or SHMS"
-    exit 2
-fi
-RunList=$2
-if [[ -z "$2" ]]; then
+RunList=$1
+if [[ -z "$1" ]]; then
     echo "I need a run list process!"
     echo "Please provide a run list as input"
     exit 2
 fi
-### Check if a third argument was provided, if not assume -1, if yes, this is max events              
-if [[ $3 -eq "" ]]; then
-    MAXEVENTS=-1
-else
-    MAXEVENTS=$3
+
+if [[ -z "$2" ]]; then
+    echo "I need a spectrometer!"
+    echo "Either HMS or SHMS"
+    exit 2
 fi
 
 # 15/02/22 - SJDK - Added the swif2 workflow as a variable you can specify here
@@ -49,16 +43,15 @@ while true; do
 		elif [[ $runNum -lt 10000 ]]; then
 		    MSSstub='/mss/hallc/spring17/raw/coin_all_%05d.dat'
 		fi
-		tape_file=`printf $MSSstub $runNum`
+		##Output batch job file##
+		batch="${USER}_${runNum}_FullReplay_Job.txt"
+                tape_file=`printf $MSSstub $runNum`
 		TapeFileSize=$(($(sed -n '4 s/^[^=]*= *//p' < $tape_file)/1000000000))
 		if [[ $TapeFileSize == 0 ]];then
                     TapeFileSize=1
                 fi
 		echo "Raw .dat file is "$TapeFileSize" GB"
-		##Output batch job file##
-		batch="${USER}_${runNum}_${SPEC}_HodoCalib_Job.txt"
-                tape_file=`printf $MSSstub $runNum`
-                tmp=tmp
+		tmp=tmp
                 ##Finds number of lines of input file##
                 numlines=$(eval "wc -l < ${inputFile}")
                 echo "Job $(( $i + 2 ))/$(( $numlines +1 ))"
@@ -66,19 +59,27 @@ while true; do
                 cp /dev/null ${batch}
                 ##Creation of batch script for submission##
                 echo "PROJECT: c-kaonlt" >> ${batch}
-		echo "TRACK: analysis" >> ${batch}
-		#echo "TRACK: debug" >> ${batch}
-                echo "JOBNAME: PionLT_HodoCalib_${SPEC}_${runNum}" >> ${batch}
-		echo "DISK_SPACE: "$(( $TapeFileSize * 2 ))" GB" >>${batch}
-                echo "MEMORY: 16000 MB" >> ${batch}
-                #echo "OS: centos7" >> ${batch}
+                echo "TRACK: analysis" >> ${batch}
+                #echo "TRACK: debug" >> ${batch} ### Use for testing
+                echo "JOBNAME: PionLT_Lumi_${runNum}" >> ${batch}
+                # Request disk space depending upon raw file size
+                echo "DISK_SPACE: "$(( $TapeFileSize * 2 ))" GB" >> ${batch}
+		if [[ $TapeFileSize -le 45 ]]; then
+		    echo "MEMORY: 6000 MB" >> ${batch}
+		elif [[ $TapeFileSize -ge 45 ]]; then
+		    echo "MEMORY: 7000 MB" >> ${batch}
+		fi
+		#echo "OS: centos7" >> ${batch}
                 echo "CPU: 1" >> ${batch} ### hcana single core, setting CPU higher will lower priority!
 		echo "INPUT_FILES: ${tape_file}" >> ${batch}
-		echo "COMMAND:/group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/Analysis_Scripts/HodoCalib_Batch.sh ${runNum} ${SPEC} ${MAXEVENTS}" >> ${batch} 
-                echo "MAIL: ${USER}@jlab.org" >> ${batch}
+		#echo "TIME: 1" >> ${batch} 
+		echo "COMMAND:/group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/Analysis_Scripts/FullReplay_Lumi_Python.sh ${runNum}" >> ${batch}
+		echo "MAIL: ${USER}@jlab.org" >> ${batch}
                 echo "Submitting batch"
-                eval "swif2 add-jsub ${Workflow} -script ${batch} 2>/dev/null"
+                eval "sbatch /group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/Analysis_Scripts/HodoCalib_Batch.sh ${runNum} ${SPEC} -1"
                 echo " "
+		sleep 2
+		rm ${batch}
                 i=$(( $i + 1 ))
 		if [ $i == $numlines ]; then
 		    echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"

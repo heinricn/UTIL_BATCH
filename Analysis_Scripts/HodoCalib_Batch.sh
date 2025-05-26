@@ -1,4 +1,5 @@
 #!/bin/bash
+#SBATCH --mem-per-cpu=6000MB
 
 ### Stephen Kay --- University of Regina --- 12/11/19 ###
 ### Script for running (via batch or otherwise) the hodoscope calibration, this one script does all of the relevant steps for the calibration proces
@@ -90,7 +91,7 @@ if [ ! -d "$REPLAYPATH/CALIBRATION/shms_hodo_calib/Calibration_Plots" ]; then
     mkdir "$REPLAYPATH/CALIBRATION/shms_hodo_calib/Calibration_Plots"
 fi
 
-eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/COIN/CALIBRATION/"$OPT"Hodo_Calib_Coin_Pt1.C($RUNNUMBER,$MAXEVENTS)\""
+#eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/COIN/CALIBRATION/"$OPT"Hodo_Calib_Coin_Pt1.C($RUNNUMBER,$MAXEVENTS)\""
 ROOTFILE="$REPLAYPATH/ROOTfiles/Calib/Hodo/"$OPT"_Hodo_Calib_Pt1_"$RUNNUMBER"_"$MAXEVENTS".root" 
 
 if [[ $OPT == "HMS" ]]; then
@@ -102,15 +103,15 @@ elif [[ $OPT == "SHMS" ]]; then
 fi
 
 cd "$REPLAYPATH/CALIBRATION/"$spec"_hodo_calib/"
-#root -l -q -b "$REPLAYPATH/CALIBRATION/"$spec"_hodo_calib/timeWalkHistos.C(\"$ROOTFILE\", $RUNNUMBER, \"coin\")"
-#root -l -q -b "$REPLAYPATH/CALIBRATION/"$spec"_hodo_calib/timeWalkCalib.C($RUNNUMBER)"
+root -l -q -b "$REPLAYPATH/CALIBRATION/"$spec"_hodo_calib/timeWalkHistos.C(\"$ROOTFILE\", $RUNNUMBER, \"coin\")"
+root -l -q -b "$REPLAYPATH/CALIBRATION/"$spec"_hodo_calib/timeWalkCalib.C($RUNNUMBER)"
 
 # After executing first two root scripts, should have a new .param file so long as scripts ran ok, IF NOT THEN EXIT
-#if [ ! -f "$REPLAYPATH/PARAM/"$OPT"/HODO/"$specL"hodo_TWcalib_$RUNNUMBER.param" ]; then
-#    echo ""$specL"hodo_TWCalib_$RUNNUMBER.param not found, calibration script likely failed"
-#    exit 2
-#fi
-#mv "$REPLAYPATH/PARAM/"$OPT"/HODO/"$specL"hodo_TWcalib_$RUNNUMBER.param" "$REPLAYPATH/PARAM/"$OPT"/HODO/Calibration/"$specL"hodo_TWcalib_$RUNNUMBER.param"
+if [ ! -f "$REPLAYPATH/PARAM/"$OPT"/HODO/"$specL"hodo_TWcalib_$RUNNUMBER.param" ]; then
+    echo ""$specL"hodo_TWCalib_$RUNNUMBER.param not found, calibration script likely failed"
+    exit 2
+fi
+mv "$REPLAYPATH/PARAM/"$OPT"/HODO/"$specL"hodo_TWcalib_$RUNNUMBER.param" "$REPLAYPATH/PARAM/"$OPT"/HODO/Calibration/"$specL"hodo_TWcalib_$RUNNUMBER.param"
 
 if ! grep -q "OfflineCalib_$RUNNUMBER.param" "$REPLAYPATH/DBASE/COIN/HodoCalib/standard_HodoCalib.database"; then
     echo -e "\n$RUNNUMBER - $RUNNUMBER \ng_ctp_parm_filename       = \"DBASE/COIN/HodoCalib/OfflineCalib_$RUNNUMBER.param\"\n" >> "$REPLAYPATH/DBASE/COIN/HodoCalib/standard_HodoCalib.database"
@@ -130,7 +131,7 @@ if [ $RUNNUMBER -lt 14777 ]; then
 	echo $noFront
 	low=${noFront:0:5}
 	high=${noFront:6:5}
-	echo "Searching for $RUNNUMBER between $low and $high"
+	#echo "Searching for $RUNNUMBER between $low and $high"
 	if [ $RUNNUMBER -le $high ] && [ $RUNNUMBER -ge $low ]; then
 	    echo "found ./OfflinePionLT_$low-$high.param copying"
 	    cp "./OfflinePionLT_$low-$high.param" $REPLAYPATH/DBASE/COIN/HodoCalib/OfflineCalib_$RUNNUMBER.param
@@ -145,7 +146,7 @@ else
         echo $noFront
         low=${noFront:0:5}
         high=${noFront:6:5}
-        echo "Searching for $RUNNUMBER between $low and $high"
+        #echo "Searching for $RUNNUMBER between $low and $high"
         if [ $RUNNUMBER -le $high ] && [ $RUNNUMBER -ge $low ]; then
             echo "found ./OfflinePionLT_$low-$high.param copying"
             cp "./OfflinePionLT_$low-$high.param" $REPLAYPATH/DBASE/COIN/HodoCalib/OfflineCalib_$RUNNUMBER.param
@@ -153,8 +154,8 @@ else
         fi
     done
 fi
-#echo "s/"$specL"hodo_TWcalib.param/Calibration\/"$specL"hodo_TWcalib_$RUNNUMBER.param/"
-#sed -i "s/"$specL"hodo_TWcalib.param/Calibration\/"$specL"hodo_TWcalib_$RUNNUMBER.param/" $REPLAYPATH/DBASE/COIN/HodoCalib/OfflineCalib_$RUNNUMBER.param
+echo "s/"$specL"hodo_TWcalib.param/Calibration\/"$specL"hodo_TWcalib_$RUNNUMBER.param/"
+sed -i "s/"$specL"hodo_TWcalib.param/Calibration\/"$specL"hodo_TWcalib_$RUNNUMBER.param/" $REPLAYPATH/DBASE/COIN/HodoCalib/OfflineCalib_$RUNNUMBER.param
 
 # Back to the main directory
 cd "$REPLAYPATH"                                
@@ -162,7 +163,7 @@ cd "$REPLAYPATH"
 #echo "Starting 2nd Replay"
 #eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/COIN/CALIBRATION/"$OPT"Hodo_Calib_Coin_Pt2.C($RUNNUMBER,$MAXEVENTS)\""
 # Clean up the directories of our generated files
-#mv "$REPLAYPATH/CALIBRATION/"$spec"_hodo_calib/timeWalkHistos_"$RUNNUMBER".root" "$REPLAYPATH/CALIBRATION/"$spec"_hodo_calib/Calibration_Plots/timeWalkHistos_"$RUNNUMBER".root"
+mv "$REPLAYPATH/CALIBRATION/"$spec"_hodo_calib/timeWalkHistos_"$RUNNUMBER".root" "$REPLAYPATH/CALIBRATION/"$spec"_hodo_calib/Calibration_Plots/timeWalkHistos_"$RUNNUMBER".root"
 
 cd "$REPLAYPATH/CALIBRATION/"$spec"_hodo_calib/"
 # Define the path to the second replay root file
