@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --mem-per-cpu=6000MB
+#SBATCH --mem-per-cpu=10000MB
 
 ### Stephen Kay --- University of Regina --- 12/11/19 ###
 ### Script for running (via batch or otherwise) the hodoscope calibration, this one script does all of the relevant steps for the calibration proces
@@ -91,7 +91,7 @@ if [ ! -d "$REPLAYPATH/CALIBRATION/shms_hodo_calib/Calibration_Plots" ]; then
     mkdir "$REPLAYPATH/CALIBRATION/shms_hodo_calib/Calibration_Plots"
 fi
 
-#eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/COIN/CALIBRATION/"$OPT"Hodo_Calib_Coin_Pt1.C($RUNNUMBER,$MAXEVENTS)\""
+eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/COIN/CALIBRATION/"$OPT"Hodo_Calib_Coin_Pt1.C($RUNNUMBER,$MAXEVENTS)\""
 ROOTFILE="$REPLAYPATH/ROOTfiles/Calib/Hodo/"$OPT"_Hodo_Calib_Pt1_"$RUNNUMBER"_"$MAXEVENTS".root" 
 
 if [[ $OPT == "HMS" ]]; then
@@ -188,7 +188,7 @@ fi
 mv "$REPLAYPATH/CALIBRATION/"$spec"_hodo_calib/HodoCalibPlots_$RUNNUMBER.root" "$REPLAYPATH/CALIBRATION/"$spec"_hodo_calib/Calibration_Plots/HodoCalibPlots_$RUNNUMBER.root"
 
 ### Set in VpCalib to param path
-sed -i "s/"$specL"hodo_Vpcalib.param/Calibration\/"$specL"hodo_Vpcalib_$RUNNUMBER.param/" $REPLAYPATH/DBASE/COIN/HodoCalib/OfflineCalib_$RUNNUMBER.param
+sed -i "s/"$specL"hodo_Vpcalib.*.param/Calibration\/"$specL"hodo_Vpcalib_$RUNNUMBER.param/" $REPLAYPATH/DBASE/COIN/HodoCalib/OfflineCalib_$RUNNUMBER.param
 
 cd "$REPLAYPATH"
 eval "$REPLAYPATH/hcana -l -q \"SCRIPTS/COIN/CALIBRATION/"$OPT"Hodo_Calib_Coin_Pt3.C($RUNNUMBER,$MAXEVENTS)\""

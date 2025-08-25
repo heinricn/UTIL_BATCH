@@ -41,6 +41,15 @@ while true; do
 		elif [[ $runNum -lt 10000 ]]; then
 		    MSSstub='/mss/hallc/spring17/raw/coin_all_%05d.dat'
 		fi
+        
+
+        if [ ! -f "/cache/hallc/c-pionlt/raw/shms_all_${runNum}.dat" ]; then
+            echo "finding: '/cache/hallc/c-pionlt/raw/shms_all_${runNum}.dat'"
+            eval "jcache get /cache/hallc/c-pionlt/raw/shms_all_${runNum}.dat"
+            #sleep 20000
+        else
+            echo "found: '/cache/hallc/c-pionlt/raw/shms_all_${runNum}.dat'"
+        fi
 		##Output batch job file                                                                        
 		batch="${USER}_${runNum}_RefTimes_Job.txt"
                 tape_file=`printf $MSSstub $runNum`

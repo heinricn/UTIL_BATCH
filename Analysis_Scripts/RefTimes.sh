@@ -45,10 +45,10 @@ cd $REPLAYPATH
 
 echo -e "\n\nStarting Replay Script\n\n"
 echo "$REPLAYPATH/hcana -l -q \"UTIL_PION/scripts/replay/PionLT/replay_AllRefTimes.C($RUNNUMBER,$MAXEVENTS)\""
-//eval "$REPLAYPATH/hcana -l -q \"UTIL_PION/scripts/replay/PionLT/replay_AllRefTimes.C($RUNNUMBER,$MAXEVENTS)\""
+#eval "$REPLAYPATH/hcana -l -q \"UTIL_PION/scripts/replay/PionLT/replay_AllRefTimes.C($RUNNUMBER,$MAXEVENTS)\""
 
 cd $REPLAYPATH/CALIBRATION/ref_times
-COMMAND="root -l -q -b 'RefTimes.C(\"$REPLAYPATH/ROOTfiles/Calib/General/Pion_coin_replay_AllRefTimes_${RUNNUMBER}_$MAXEVENTS.root\",${RUNNUMBER})'"
+COMMAND="root -l -q -b 'CoinRefTimes.C(\"$REPLAYPATH/ROOTfiles/Calib/General/Pion_coin_replay_AllRefTimes_${RUNNUMBER}_$MAXEVENTS.root\",${RUNNUMBER})'"
 echo $COMMAND
 eval $COMMAND
 exit 0

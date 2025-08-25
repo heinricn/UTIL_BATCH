@@ -70,7 +70,7 @@ while true; do
 		echo "COMMAND:/group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/Analysis_Scripts/FullReplay_Lumi_Python.sh ${runNum}" >> ${batch}
 		echo "MAIL: ${USER}@jlab.org" >> ${batch}
                 echo "Submitting batch"
-                eval "swif2 add-jsub ${Workflow} -script ${batch} 2>/dev/null"
+                eval "sbatch /group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/Analysis_Scripts/FullReplay_Lumi_Python.sh ${runNum}"
                 echo " "
 		sleep 2
 		rm ${batch}

@@ -20,6 +20,8 @@ if [[ -z "$2" ]]; then
     exit 2
 fi
 
+SPEC=$2
+
 # 15/02/22 - SJDK - Added the swif2 workflow as a variable you can specify here
 Workflow="LTSep_${USER}" # Change this as desired
 # Input run numbers, this just points to a file which is a list of run numbers, one number per line

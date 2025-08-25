@@ -37,6 +37,16 @@ while true; do
 		elif [[ $runNum -lt 10000 ]]; then
 		    MSSstub='/mss/hallc/spring17/raw/coin_all_%05d.dat'
 		fi
+
+        # Manually get jcache to pull files
+        if [ ! -f "/cache/hallc/c-pionlt/raw/shms_all_${runNum}.dat" ]; then
+            echo "finding: '/cache/hallc/c-pionlt/raw/shms_all_${runNum}.dat'"
+            eval "jcache get /cache/hallc/c-pionlt/raw/shms_all_${runNum}.dat"
+            #sleep 20000
+        else
+            echo "found: '/cache/hallc/c-pionlt/raw/shms_all_${runNum}.dat'"
+        fi
+
 		##Output batch job file##
 		batch="${USER}_${runNum}_FullReplay_Job.txt"
                 tape_file=`printf $MSSstub $runNum`
@@ -70,7 +80,7 @@ while true; do
 		echo "COMMAND:/group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/Analysis_Scripts/FullReplay_Lumi_Python_coin.sh ${runNum}" >> ${batch}
 		echo "MAIL: ${USER}@jlab.org" >> ${batch}
                 echo "Submitting batch"
-                eval "swif2 add-jsub ${Workflow} -script ${batch} 2>/dev/null"
+                eval "sbatch /group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/Analysis_Scripts/FullReplay_Lumi_Python_coin.sh ${runNum}"
                 echo " "
 		sleep 2
 		rm ${batch}
