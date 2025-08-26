@@ -43,6 +43,21 @@ elif [[ "${HOSTNAME}" = *"phys.uregina.ca"* ]]; then
 fi
 cd $REPLAYPATH
 
+x=1
+while [ ! -f "/cache/hallc/c-pionlt/raw/shms_all_${RUNNUMBER}.dat" ];
+do
+    x=$(( $x + 1 ))
+    #eval "jcache get /cache/hallc/c-pionlt/raw/shms_all_${RUNNUMBER}.dat"
+    if [ $x -gt 100 ]; then
+        echo "failed to find file after 2.5 hours"
+        exit 3
+    fi    
+    echo "finding: '/cache/hallc/c-pionlt/raw/shms_all_${RUNNUMBER}.dat'\n"    
+    sleep 1000
+
+done
+echo "found: '/cache/hallc/c-pionlt/raw/shms_all_${RUNNUMBER}.dat'\n"    
+
 echo -e "\n\nStarting Replay Script\n\n"
 echo "$REPLAYPATH/hcana -l -q \"UTIL_PION/scripts/replay/PionLT/replay_AllRefTimes.C($RUNNUMBER,$MAXEVENTS)\""
 #eval "$REPLAYPATH/hcana -l -q \"UTIL_PION/scripts/replay/PionLT/replay_AllRefTimes.C($RUNNUMBER,$MAXEVENTS)\""

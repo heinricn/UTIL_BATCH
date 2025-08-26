@@ -43,6 +43,7 @@ while true; do
 		fi
         
 
+        # Manually get jcache to pull files
         if [ ! -f "/cache/hallc/c-pionlt/raw/shms_all_${runNum}.dat" ]; then
             echo "finding: '/cache/hallc/c-pionlt/raw/shms_all_${runNum}.dat'"
             eval "jcache get /cache/hallc/c-pionlt/raw/shms_all_${runNum}.dat"
@@ -50,6 +51,7 @@ while true; do
         else
             echo "found: '/cache/hallc/c-pionlt/raw/shms_all_${runNum}.dat'"
         fi
+        
 		##Output batch job file                                                                        
 		batch="${USER}_${runNum}_RefTimes_Job.txt"
                 tape_file=`printf $MSSstub $runNum`
