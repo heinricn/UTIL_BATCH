@@ -85,8 +85,8 @@ while true; do
 		echo "MAIL: ${USER}@jlab.org" >> ${batch}
                 echo "Submitting batch"
                 #eval "sbatch /group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/Analysis_Scripts/FullReplay_Lumi_Python_coin.sh ${runNum}"
-                echo "swif2 add-job LTSep -disk "$DISK_SPACE"GB -ram ${RAM}GB -stdout /farm_out/heinricn/swif/LTSep/out -stderr /farm_out/heinricn/swif/LTSep/err ${COMMAND}"
-                eval "swif2 add-job LTSep -disk "$DISK_SPACE"GB -ram ${RAM}GB -stdout /farm_out/heinricn/swif/LTSep/out -stderr /farm_out/heinricn/swif/LTSep/err ${COMMAND}"
+                echo "swif2 add-job LTSep -disk "$DISK_SPACE"GB -ram ${RAM}GB -stdout /farm_out/heinricn/swif/LTSep/out -stderr /farm_out/heinricn/swif/LTSep/err ${COMMAND} -name LumiCoin_"$runNum""
+                eval "swif2 add-job LTSep -disk "$DISK_SPACE"GB -ram ${RAM}GB -stdout /farm_out/heinricn/swif/LTSep/out -stderr /farm_out/heinricn/swif/LTSep/err ${COMMAND} -name LumiCoin_"$runNum""
                 echo " "
 		sleep 2
 		rm ${batch}
