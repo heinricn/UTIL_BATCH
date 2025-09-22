@@ -75,17 +75,23 @@ while true; do
 		# Request double the tape file size in space, for trunctuated replays edit down as needed
 		# Note, unless this is set typically replays will produce broken root files
 		echo "DISK_SPACE: "$(( $TapeFileSize * 2 ))" GB" >> ${batch}
+        DISK_SPACE=$(( $TapeFileSize * 2 ))
 		if [[ $TapeFileSize -le 45 ]]; then # Assign memory based on size of tape file, should keep this as low as possible!
                     echo "MEMORY: 3000 MB" >> ${batch}
+                    RAM=3
                 elif [[ $TapeFileSize -ge 45 ]]; then
                     echo "MEMORY: 4000 MB" >> ${batch}
+                    RAM=4
                 fi
 		echo "CPU: 1" >> ${batch} ### hcana is single core, setting CPU higher will lower priority and gain you nothing!
 		echo "INPUT_FILES: ${tape_file}" >> ${batch}
                 echo "COMMAND:/group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/Analysis_Scripts/RefTimes.sh ${runNum} ${MAXEVENTS}"  >> ${batch}
+                COMMAND="COMMAND:/group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/Analysis_Scripts/RefTimes.sh ${runNum} ${MAXEVENTS}"
                 echo "MAIL: ${USER}@jlab.org" >> ${batch}
                 echo "Submitting ${batch}"
-                eval "swif2 add-jsub LTSep -script ${batch} 2>/dev/null"
+                #eval "swif2 add-jsub LTSep -script ${batch} 2>/dev/null"
+                echo "swif2 add-job LTSep -disk "$DISK_SPACE"GB -ram ${RAM}GB -stdout /farm_out/heinricn/swif/LTSep/out -stderr /farm_out/heinricn/swif/LTSep/err ${COMMAND} -name RefTime"$runNum""
+                eval "swif2 add-job LTSep -disk "$DISK_SPACE"GB -ram ${RAM}GB -stdout /farm_out/heinricn/swif/LTSep/out -stderr /farm_out/heinricn/swif/LTSep/err ${COMMAND} -name RefTime"$runNum""
                 echo " "
 		sleep 2
 		rm ${batch}

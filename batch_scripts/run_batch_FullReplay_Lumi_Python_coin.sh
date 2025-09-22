@@ -68,19 +68,25 @@ while true; do
                 echo "JOBNAME: PionLT_Lumi_${runNum}" >> ${batch}
                 # Request disk space depending upon raw file size
                 echo "DISK_SPACE: "$(( $TapeFileSize * 2 ))" GB" >> ${batch}
+                DISK_SPACE=$(( $TapeFileSize * 2 ))
 		if [[ $TapeFileSize -le 45 ]]; then
 		    echo "MEMORY: 6000 MB" >> ${batch}
+            RAM=6
 		elif [[ $TapeFileSize -ge 45 ]]; then
 		    echo "MEMORY: 7000 MB" >> ${batch}
+            RAM=7
 		fi
 		#echo "OS: centos7" >> ${batch}
                 echo "CPU: 1" >> ${batch} ### hcana single core, setting CPU higher will lower priority!
 		echo "INPUT_FILES: ${tape_file}" >> ${batch}
 		#echo "TIME: 1" >> ${batch} 
 		echo "COMMAND:/group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/Analysis_Scripts/FullReplay_Lumi_Python_coin.sh ${runNum}" >> ${batch}
+		COMMAND="/group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/Analysis_Scripts/FullReplay_Lumi_Python.sh ${runNum}"
 		echo "MAIL: ${USER}@jlab.org" >> ${batch}
                 echo "Submitting batch"
-                eval "sbatch /group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/Analysis_Scripts/FullReplay_Lumi_Python_coin.sh ${runNum}"
+                #eval "sbatch /group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/Analysis_Scripts/FullReplay_Lumi_Python_coin.sh ${runNum}"
+                echo "swif2 add-job LTSep -disk "$DISK_SPACE"GB -ram ${RAM}GB -stdout /farm_out/heinricn/swif/LTSep/out -stderr /farm_out/heinricn/swif/LTSep/err ${COMMAND}"
+                eval "swif2 add-job LTSep -disk "$DISK_SPACE"GB -ram ${RAM}GB -stdout /farm_out/heinricn/swif/LTSep/out -stderr /farm_out/heinricn/swif/LTSep/err ${COMMAND}"
                 echo " "
 		sleep 2
 		rm ${batch}
@@ -95,7 +101,7 @@ while true; do
 		fi
 	    done < "$inputFile"
 	    )
-	    eval 'swif2 run ${Workflow}'
+#	    eval 'swif2 run ${Workflow}'
 	    break;;
         [Nn]* ) 
 	    exit;;
