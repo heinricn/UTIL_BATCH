@@ -3,7 +3,7 @@
 #
 # Description:
 # ================================================================
-# Time-stamp: "2023-02-14 18:16:45 trottar"
+# Time-stamp: "2023-08-06 11:47:36 trottar"
 # ================================================================
 #
 # Author:  Richard L. Trotta III <trotta@cua.edu>
@@ -56,7 +56,9 @@ done
 
 UTILPATH="/group/c-kaonlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH"
 
-if [[ $a_flag = 'true' ]]; then
+echo $a_flag
+
+if [[ $a_flag = "true" ]]; then
     EPSILON=$(echo "$2" | tr '[:upper:]' '[:lower:]')
     PHIVAL=$(echo "$3" | tr '[:upper:]' '[:lower:]')
     Q2=$4
@@ -181,18 +183,24 @@ Workflow="LTSep_${USER}" # Change this as desired
 inputFile="/group/c-kaonlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/InputRunLists/KaonLT_2018_2019/${RunList}"
 
 while true; do
-    read -p "Do you wish to begin a new batch submission? (Please answer yes or no) " yn
+
+    if [[ $a_flag = "true" ]]; then
+	yn="Y"  # Set the variable directly to "Y" to bypass the prompt
+    else
+	read -p "Do you wish to begin a new batch submission? (Please answer yes or no) " yn
+    fi
+
     case $yn in
-        [Yy]* )
-            i=-1
-            (
-            ##Reads in input file##
-            while IFS='' read -r line || [[ -n "$line" ]]; do
-                echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-                echo "Run number read from file: $line"
-                echo ""
-                ##Run number#
-                runNum=$line
+	[Yy]* )
+	    i=-1
+	    (
+	    ##Reads in input file##
+	    while IFS='' read -r line || [[ -n "$line" ]]; do
+		echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+		echo "Run number read from file: $line"
+		echo ""
+		##Run number#
+		runNum=$line
 		if [[ $runNum -ge 10000 ]]; then
 		    MSSstub='/mss/hallc/c-kaonlt/raw/shms_all_%05d.dat'
 		elif [[ $runNum -lt 10000 ]]; then
@@ -204,37 +212,39 @@ while true; do
 		else
 		    batch="${USER}_${runNum}_FullReplay_${RUNTYPE}_Job.txt"
 		fi
-                tape_file=`printf $MSSstub $runNum`
+		tape_file=`printf $MSSstub $runNum`
 		TapeFileSize=$(($(sed -n '4 s/^[^=]*= *//p' < $tape_file)/1000000000))
 		if [[ $TapeFileSize == 0 ]];then
-                    TapeFileSize=1
-                fi
+		    TapeFileSize=1
+		fi
 		echo "Raw .dat file is "$TapeFileSize" GB"
 		tmp=tmp
-                ##Finds number of lines of input file##
-                numlines=$(eval "wc -l < ${inputFile}")
-                echo "Job $(( $i + 2 ))/$(( $numlines +1 ))"
-                echo "Running ${batch} for ${runNum}"
-                cp /dev/null ${batch}
-                ##Creation of batch script for submission##
+		##Finds number of lines of input file##
+		numlines=$(eval "wc -l < ${inputFile}")
+		echo "Job $(( $i + 2 ))/$(( $numlines +1 ))"
+		echo "Running ${batch} for ${runNum}"
+		cp /dev/null ${batch}
+		##Creation of batch script for submission##
 		echo "MAIL: ${USER}@jlab.org" >> ${batch}
-                echo "PROJECT: c-kaonlt" >> ${batch} # Or whatever your project is!
-                echo "TRACK: analysis" >> ${batch}
-                #echo "TRACK: debug" >> ${batch} ### Use for testing
+		echo "PROJECT: c-kaonlt" >> ${batch} # Or whatever your project is!
+		echo "TRACK: analysis" >> ${batch}
+		#echo "TRACK: debug" >> ${batch} ### Use for testing
 		if [[ $a_flag = 'true' ]]; then
 		    echo "JOBNAME: KaonLT_LTSep_${runNum}" >> ${batch}
 		else
 		    echo "JOBNAME: KaonLT_${RUNTYPE}_${runNum}" >> ${batch}
 		fi
-                # Request disk space depending upon raw file size
-                echo "DISK_SPACE: "$(( $TapeFileSize * 2 ))" GB" >> ${batch}
-		if [[ $TapeFileSize -le 45 ]]; then
-		    echo "MEMORY: 3000 MB" >> ${batch}
-		elif [[ $TapeFileSize -ge 45 ]]; then
-		    echo "MEMORY: 4000 MB" >> ${batch}
-		fi
+		# Request disk space depending upon raw file size
+		#echo "DISK_SPACE: "$(( $TapeFileSize * 2 ))" GB" >> ${batch}
+		echo "DISK_SPACE: 50 GB" >> ${batch}
+		#if [[ $TapeFileSize -le 45 ]]; then
+		#    echo "MEMORY: 3000 MB" >> ${batch}
+		#elif [[ $TapeFileSize -ge 45 ]]; then
+		#    echo "MEMORY: 4000 MB" >> ${batch}
+		#fi
+		echo "MEMORY: 10000 MB" >> ${batch}
 		#echo "OS: centos7" >> ${batch}
-                echo "CPU: 1" >> ${batch} ### hcana single core, setting CPU higher will lower priority!
+		echo "CPU: 1" >> ${batch} ### hcana single core, setting CPU higher will lower priority!
 		echo "INPUT_FILES: ${tape_file}" >> ${batch}
 		#echo "TIME: 1" >> ${batch}
 		if [[ $a_flag = 'true' ]]; then
@@ -242,12 +252,13 @@ while true; do
 		else
 		    echo "COMMAND:${ANASCRIPT} ${runNum} ${MAXEVENTS}" >> ${batch}
 		fi
-                echo "Submitting batch"
- 		eval "swif2 add-jsub ${Workflow} -script ${batch} 2>/dev/null" # Swif2 job submission, uses old jsub scripts
-                echo " "
+		echo "Submitting batch"
+		eval "swif2 add-jsub ${Workflow} -script ${batch} 2>/dev/null" # Swif2 job submission, uses old jsub scripts
+		eval "swif2 notify ${Workflow} -when done -email ${USER}@jlab.org" # Send email notification when jobs finish
+		echo " "
 		sleep 2
 		rm ${batch}
-                i=$(( $i + 1 ))
+		i=$(( $i + 1 ))
 		if [ $i == $numlines ]; then
 		    echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 		    echo " "
@@ -260,8 +271,9 @@ while true; do
 	    )
 	    eval 'swif2 run ${Workflow}'
 	    break;;
-        [Nn]* ) 
+	[Nn]* ) 
 	    exit;;
-        * ) echo "Please answer yes or no.";;
+	* ) echo "Please answer yes or no.";;
     esac
 done
+

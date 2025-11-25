@@ -22,7 +22,7 @@ fi
 # 15/02/22 - SJDK - Added the swif2 workflow as a variable you can specify here
 Workflow="LTSep_${USER}" # Change this as desired
 ##Input run numbers##                                                                      
-inputFile="/group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/InputRunLists/${RunList}"
+inputFile="/group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/InputRunLists/Calibrations/${RunList}"
 
 while true; do
     read -p "Do you wish to begin a new batch submission? (Please answer yes or no) " yn
@@ -61,14 +61,14 @@ while true; do
 		echo "PROJECT: c-kaonlt" >> ${batch} # Or whatever your project is!
 		echo "TRACK: analysis" >> ${batch} ## Use this track for production running
                 #echo "TRACK: debug" >> ${batch} ### Use this track for testing, higher priority
-                echo "JOBNAME: CalCalib_${SPEC}_${runNum}" >> ${batch} ## Change to be more specific if you want
+                echo "JOBNAME: PionLT_CalCalib_${SPEC}_${runNum}" >> ${batch} ## Change to be more specific if you want
 		# Request double the tape file size in space, for trunctuated replays edit down as needed
 		# Note, unless this is set typically replays will produce broken root files
 		echo "DISK_SPACE: "$(( $TapeFileSize * 2 ))" GB" >> ${batch}
 		if [[ $TapeFileSize -le 45 ]]; then # Assign memory based on size of tape file, should keep this as low as possible!
                     echo "MEMORY: 2500 MB" >> ${batch}
                 elif [[ $TapeFileSize -ge 45 ]]; then
-                    echo "MEMORY: 4000 MB" >> ${batch}
+                    echo "MEMORY: 3500 MB" >> ${batch}
                 fi
                 echo "CPU: 1" >> ${batch} ### hcana is single core, setting CPU higher will lower priority and gain you nothing!
 		echo "INPUT_FILES: ${tape_file}" >> ${batch}

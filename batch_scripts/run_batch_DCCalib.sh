@@ -29,7 +29,7 @@ fi
 # 15/02/22 - SJDK - Added the swif2 workflow as a variable you can specify here
 Workflow="LTSep_${USER}" # Change this as desired
 # Input run numbers, this just points to a file which is a list of run numbers, one number per line
-inputFile="/group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/InputRunLists/${RunList}"
+inputFile="/group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/InputRunLists/Calibrations/${RunList}"
 
 while true; do
     read -p "Do you wish to begin a new batch submission? (Please answer yes or no) " yn
@@ -52,6 +52,10 @@ while true; do
 		##Output batch job file##
 		batch="${USER}_${runNum}_${SPEC}_DCCalib_Job.txt"
                 tape_file=`printf $MSSstub $runNum`
+		TapeFileSize=$(($(sed -n '4 s/^[^=]*= *//p' < $tape_file)/1000000000)) # This line gets the SIZE of the file from the tape stub
+                if [[ $TapeFileSize == 0 ]];then
+                    TapeFileSize=2
+                fi
                 tmp=tmp
                 ##Finds number of lines of input file##                                                               
                 numlines=$(eval "wc -l < ${inputFile}")
@@ -63,8 +67,12 @@ while true; do
 		echo "TRACK: analysis" >> ${batch}
 		#echo "TRACK: debug" >> ${batch}
                 echo "JOBNAME: PionLT_DCCalib_${SPEC}_${runNum}" >> ${batch}
-		echo "DISK_SPACE: 20 GB" >>${batch} 
-                echo "MEMORY: 3000 MB" >> ${batch}
+		echo "DISK_SPACE: "$(( $TapeFileSize * 2 ))" GB" >> ${batch}
+                if [[ $TapeFileSize -le 45 ]]; then # Assign memory based on size of tape file, should keep this as low as possible!
+                    echo "MEMORY: 2500 MB" >> ${batch}
+                elif [[ $TapeFileSize -ge 45 ]]; then
+                    echo "MEMORY: 3500 MB" >> ${batch}
+                fi
                 #echo "OS: centos7" >> ${batch}
                 echo "CPU: 1" >> ${batch} ### hcana single core, setting CPU higher will lower priority
 		echo "INPUT_FILES: ${tape_file}" >> ${batch}
