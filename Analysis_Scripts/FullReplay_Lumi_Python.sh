@@ -45,6 +45,21 @@ fi
 UTILPATH="${REPLAYPATH}/UTIL_PION"
 cd $REPLAYPATH
 
+x=1
+while [ ! -f "/cache/hallc/c-pionlt/raw/shms_all_${RUNNUMBER}.dat" ];
+do
+    x=$(( $x + 1 ))
+    #eval "jcache get /cache/hallc/c-pionlt/raw/shms_all_${RUNNUMBER}.dat"
+    if [ $x -gt 100 ]; then
+        echo "failed to find file after 2.5 hours"
+        exit 3
+    fi    
+    echo "finding: '/cache/hallc/c-pionlt/raw/shms_all_${RUNNUMBER}.dat'\n"    
+    sleep 1000
+
+done
+echo "found: '/cache/hallc/c-pionlt/raw/shms_all_${RUNNUMBER}.dat'\n" 
+
 eval "$UTILPATH/scripts/luminosity/replay_lumi.sh $RUNNUMBER -1" 
 
 exit 0

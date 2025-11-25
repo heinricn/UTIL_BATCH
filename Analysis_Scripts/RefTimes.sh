@@ -60,7 +60,7 @@ echo "found: '/cache/hallc/c-pionlt/raw/shms_all_${RUNNUMBER}.dat'\n"
 
 echo -e "\n\nStarting Replay Script\n\n"
 echo "$REPLAYPATH/hcana -l -q \"UTIL_PION/scripts/replay/PionLT/replay_AllRefTimes.C($RUNNUMBER,$MAXEVENTS)\""
-#eval "$REPLAYPATH/hcana -l -q \"UTIL_PION/scripts/replay/PionLT/replay_AllRefTimes.C($RUNNUMBER,$MAXEVENTS)\""
+eval "$REPLAYPATH/hcana -l -q \"UTIL_PION/scripts/replay/PionLT/replay_AllRefTimes.C($RUNNUMBER,$MAXEVENTS)\""
 
 cd $REPLAYPATH/CALIBRATION/ref_times
 COMMAND="root -l -q -b 'CoinRefTimes.C(\"$REPLAYPATH/ROOTfiles/Calib/General/Pion_coin_replay_AllRefTimes_${RUNNUMBER}_$MAXEVENTS.root\",${RUNNUMBER})'"

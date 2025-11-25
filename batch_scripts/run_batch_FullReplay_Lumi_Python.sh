@@ -85,8 +85,8 @@ while true; do
 		echo "MAIL: ${USER}@jlab.org" >> ${batch}
                 echo "Submitting batch"
                 #eval "sbatch /group/c-pionlt/USERS/${USER}/hallc_replay_lt/UTIL_BATCH/Analysis_Scripts/FullReplay_Lumi_Python.sh ${runNum}"
-                echo "swif2 add-job LTSep -disk "$DISK_SPACE"GB -ram ${RAM}GB -stdout /farm_out/heinricn/swif/LTSep/out -stderr /farm_out/heinricn/swif/LTSep/err ${COMMAND} -name Lumi"$runNum""
-                eval "swif2 add-job LTSep -disk "$DISK_SPACE"GB -ram ${RAM}GB -stdout /farm_out/heinricn/swif/LTSep/out -stderr /farm_out/heinricn/swif/LTSep/err ${COMMAND} -name Lumi"$runNum""
+                echo "swif2 add-job LTSep -disk "$DISK_SPACE"GB -ram ${RAM}GB -stdout /farm_out/heinricn/swif/LTSep/out/Lumi"$runNum".out -stderr /farm_out/heinricn/swif/LTSep/err/Lumi"$runNum".err ${COMMAND} -name Lumi"$runNum""
+                eval "swif2 add-job LTSep -disk "$DISK_SPACE"GB -ram ${RAM}GB -stdout /farm_out/heinricn/swif/LTSep/out/Lumi"$runNum".out -stderr /farm_out/heinricn/swif/LTSep/err/Lumi"$runNum".err ${COMMAND} -name Lumi"$runNum""
                 echo " "
 		sleep 2
 		rm ${batch}
