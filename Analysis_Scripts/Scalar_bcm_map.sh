@@ -53,13 +53,27 @@ fi
 cd "CALIBRATION/bcm_current_map"
 echo "Starting BMC Current map"
 echo "Running Command: .x run.C(\"${REPLAYPATH}/ROOTfiles/Scalers/coin_replay_scalers_${RUNNUMBER}_${MAXEVENTS}.root\")"
-cd "$REPLAYPATH/CALIBRATION/bcm_current_map"
-root -b -l<<EOF 
-	.L ScalerCalib.C+
+#cd "$REPLAYPATH/CALIBRATION/bcm_current_map"
+#root -b -l<<EOF 
+#	.L ScalerCalib.C+
 #	.x run.C("${REPLAYPATH}/ROOTfiles/Scalers/coin_replay_scalers_${RUNNUMBER}_${MAXEVENTS}.root")
-	.q  
-EOF
-    echo "Moving output file"
+#	.q  
+#EOF
+#    echo "Moving output file"
 #    mv bcmcurrent_$RUNNUMBER.param $REPLAYPATH/PARAM/HMS/BCM/CALIB/bcmcurrent_$RUNNUMBER.param
+
+if [ ! -f "$UTILPATH/ROOTfiles/Scalers/coin_replay_scalers_${RUNNUMBER}_${MAXEVENTS}.root" ]; then
+    eval "$REPLAYPATH/hcana -l -q -b \"SCRIPTS/COIN/SCALERS/PionLT/replay_coin_scalers.C($RUNNUMBER,${MAXEVENTS})\""
+    cd "$REPLAYPATH/CALIBRATION/bcm_current_map"
+    root -b -l<<EOF 
+.L ScalerCalib.C
+.x run.C("${UTILPATH}/ROOTfiles/Scalers/coin_replay_scalers_${RUNNUMBER}_${MAXEVENTS}.root")
+.q  
+EOF
+    mv bcmcurrent_${RUNNUMBER}.param $REPLAYPATH/PARAM/HMS/BCM/CALIB/bcmcurrent_$RUNNUMBER.param
+    echo "moving output: mv bcmcurrent_${RUNNUMBER}.param $REPLAYPATH/PARAM/HMS/BCM/CALIB/bcmcurrent_$RUNNUMBER.param"
+    cd $REPLAYPATH
+else echo "Scaler replayfile already found for this run in $REPLAYPATH/ROOTfiles/Scalers - Skipping scaler replay step"
+fi
 
 exit 0
